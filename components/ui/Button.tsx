@@ -62,7 +62,7 @@ export default function MyButton({
           "rounded-lg flex-row items-center justify-center inline-flex self-start px-[26px] py-[8px]",
           variantStyles[variant],
           textVariantStyles[variant],
-          isDisabled && "opacity-50",
+          isDisabled && "opacity-80",
           className
         )}
       >
