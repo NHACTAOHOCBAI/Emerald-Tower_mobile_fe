@@ -1,17 +1,24 @@
-import { Text, View } from "react-native";
+import { useFonts } from "expo-font";
+import { Redirect } from "expo-router";
+import { ActivityIndicator, View } from "react-native";
 import "../global.css";
-const Home = () => {
-  return (
-    <View className="mt-10">
-      <Text className="text-blue-50">hi</Text>
-      <Text className="text-blue-50">hi</Text>
-      <Text className="text-blue-50">hi</Text>
+(Text as any).defaultProps = (Text as any).defaultProps || {};
+(Text as any).defaultProps.style = { fontFamily: "BeVietnamPro" };
+export default function RootLayout() {
+  const [loaded] = useFonts({
+    BeVietnamPro: require("../assets/fonts/BeVietnamPro-Regular.ttf"),
+    BeVietnamProMedium: require("../assets/fonts/BeVietnamPro-Medium.ttf"),
+    BeVietnamProSemiBold: require("../assets/fonts/BeVietnamPro-SemiBold.ttf"),
+    BeVietnamProBold: require("../assets/fonts/BeVietnamPro-Bold.ttf"),
+  });
 
-      <Text className="text-blue-50">hi</Text>
-      <Text>hi</Text>
-      <Text>hi</Text>
-      <Text>hi</Text>
-    </View>
-  );
-};
-export default Home;
+  if (!loaded) {
+    return (
+      <View className="flex-1 justify-center items-center">
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
+  return <Redirect href="/(tabs)/home" />;
+}
