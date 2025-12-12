@@ -81,7 +81,7 @@ export default function BaseInput({
             numberOfLines={numberOfLines}
             keyboardType={keyboardType}
             className={cn(
-              "flex-1 text-base font-BeVietnamPro py-2 text-[#244B35]",
+              "flex-1 text-base font-BeVietnamPro py-3 text-[#244B35]",
               multiline && "text-start"
             )}
           />
