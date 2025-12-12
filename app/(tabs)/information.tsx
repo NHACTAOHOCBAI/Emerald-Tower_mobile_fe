@@ -1,5 +1,6 @@
 import BaseInput from "@/components/ui/BaseInput";
 import MyButton from "@/components/ui/Button";
+import MyDropdown from "@/components/ui/Dropdown";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { View } from "react-native";
@@ -36,7 +37,23 @@ export default function LoginScreen() {
           />
         )}
       />
-
+      <Controller
+        control={control}
+        name="email"
+        render={({ field: { onChange, value }, fieldState: { error } }) => (
+          <MyDropdown
+            value={value}
+            placeholder="Chọn giới tính"
+            items={[
+              { label: "Nam", value: "12@gmail.com" },
+              { label: "Nữ", value: "female" },
+              { label: "Khác", value: "other" },
+            ]}
+            onSelect={onChange}
+            error={error?.message}
+          />
+        )}
+      />
       <Controller
         control={control}
         name="password"
