@@ -1,25 +1,16 @@
-import BaseInput from "@/components/ui/BaseInput";
-import MyDropdown from "@/components/ui/Dropdown";
+import MultiImageUpload from "@/components/ui/MultiImageUpload";
 import { useState } from "react";
 import { View } from "react-native";
 
-export default function TestScreen() {
-  const [gender, setGender] = useState<string | number>();
+export default function Screen() {
+  const [photos, setPhotos] = useState<string[]>([]);
 
   return (
-    <View className="p-4">
-      <BaseInput />
-      <MyDropdown
-        value={gender}
-        placeholder="Chọn giới tính"
-        items={[
-          { label: "Nam", value: "male" },
-          { label: "Nữ", value: "female" },
-          { label: "Khác", value: "other" },
-        ]}
-        onSelect={(v) => setGender(v)}
-        error={!gender ? "Vui lòng chọn giới tính" : ""}
-      />
+    <View className="p-4 mt-10">
+      <MultiImageUpload value={photos} onChange={setPhotos} max={1} />;
+      {/* <Text className="mt-4 text-gray-500">
+        Link ảnh: {photos ?? "Chưa có ảnh"}
+      </Text> */}
     </View>
   );
 }

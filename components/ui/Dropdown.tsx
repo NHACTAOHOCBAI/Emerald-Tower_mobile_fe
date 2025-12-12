@@ -89,7 +89,7 @@ export default function MyDropdown({
   };
 
   return (
-    <View className="w-full mb-3 relative">
+    <View className="w-full relative">
       {/* Header */}
       <Animated.View style={[animatedContainer]} className="rounded-lg border">
         <Pressable
