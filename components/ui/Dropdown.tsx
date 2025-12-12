@@ -28,6 +28,7 @@ interface DropdownProps {
   disabled?: boolean;
   onSelect?: (value: string | number) => void;
   className?: string;
+  width?: number;
 }
 
 export default function MyDropdown({
@@ -38,6 +39,7 @@ export default function MyDropdown({
   disabled,
   onSelect,
   className,
+  width,
 }: DropdownProps) {
   const [open, setOpen] = useState(false);
 
@@ -89,15 +91,17 @@ export default function MyDropdown({
   };
 
   return (
-    <View className="w-full relative">
+    <View className="relative">
       {/* Header */}
-      <Animated.View style={[animatedContainer]} className="rounded-lg border">
+      <Animated.View
+        style={[animatedContainer]}
+        className={cn(`rounded-lg border`, className, `w-[${width}px]`)}
+      >
         <Pressable
           onPress={toggleDropdown}
           className={cn(
             "px-3 py-3 flex-row justify-between items-center",
-            disabled && "opacity-50 bg-gray-100",
-            className
+            disabled && "opacity-50 bg-gray-100"
           )}
         >
           <Text
@@ -130,7 +134,10 @@ export default function MyDropdown({
       {/* Dropdown list */}
       <Animated.View
         style={animatedHeight}
-        className="overflow-hidden border border-[#D9D9D9] rounded-lg  bg-white absolute w-full z-10 mt-[48px]"
+        className={cn(
+          "overflow-hidden border border-[#D9D9D9] rounded-lg  bg-white absolute w-full z-10 mt-[48px]",
+          `w-[${width}px]`
+        )}
       >
         <FlatList
           data={items}

@@ -54,7 +54,7 @@ export default function BaseInput({
   }));
 
   return (
-    <View className="w-full">
+    <View>
       <Animated.View
         style={animatedBorder}
         className={cn(
