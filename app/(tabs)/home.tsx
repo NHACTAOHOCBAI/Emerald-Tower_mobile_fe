@@ -18,14 +18,14 @@ const ITEMS = [
 export default function Screen() {
   const [date, setDate] = useState(new Date());
   return (
-    <View className="p-[20px]">
+    <View className="p-5">
       <DatePicker
-        className="w-[200px]"
         value={date}
         onChange={setDate}
-        placeholder="Chọn ngày sinh"
+        label="Ngày sinh"
+        minimumDate={new Date(1900, 0, 1)}
+        maximumDate={new Date()}
       />
-      {/* <Tab items={ITEMS} defaultValue="pending" /> */}
     </View>
   );
 }

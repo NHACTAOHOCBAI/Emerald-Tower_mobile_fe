@@ -1,86 +1,97 @@
-import { CalendarDays } from "lucide-react-native";
-import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { cn } from "@/utils/cn";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { useEffect, useState } from "react";
+import { Platform, Pressable, Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 type Props = {
-  value?: Date;
-  onChange: (d: Date) => void;
+  value: Date;
+  onChange: (date: Date) => void;
+  label?: string;
+  minimumDate?: Date;
+  maximumDate?: Date;
   error?: string;
-  placeholder?: string;
-
+  disabled?: boolean;
   className?: string;
-  triggerClassName?: string;
-  contentClassName?: string;
-  itemClassName?: string;
-  selectedItemClassName?: string;
 };
 
 export default function DatePicker({
   value,
   onChange,
+  label = "Chọn ngày",
+  minimumDate,
+  maximumDate,
   error,
-  placeholder = "Chọn ngày",
-
+  disabled,
   className,
-  triggerClassName,
-  contentClassName,
-  itemClassName,
-  selectedItemClassName = "bg-orange-200 rounded-lg",
 }: Props) {
-  const [open, setOpen] = useState(false);
+  const [show, setShow] = useState(false);
+  const [focused, setFocused] = useState(false);
 
-  const display = value ? value.toLocaleDateString("vi-VN") : placeholder;
-  const days = Array.from({ length: 31 }, (_, i) => i + 1);
+  const borderAnim = useSharedValue(0);
+
+  useEffect(() => {
+    borderAnim.value = focused ? 1 : 0;
+  }, [focused]);
+
+  const animatedBorder = useAnimatedStyle(() => ({
+    borderColor: withTiming(
+      error ? "#ef4444" : borderAnim.value ? "#244B35" : "#D9D9D9",
+      { duration: 160 }
+    ),
+  }));
 
   return (
-    <View className={`mb-3 ${className ?? ""}`}>
-      <Pressable
-        onPress={() => setOpen(!open)}
-        className={`flex-row items-center px-4 py-3 rounded-xl border ${
-          error ? "border-red-500" : "border-gray-300"
-        } ${triggerClassName ?? ""}`}
-      >
-        <CalendarDays size={18} color="#666" />
-        <Text className={`ml-2 ${value ? "text-black" : "text-gray-400"}`}>
-          {display}
+    <View>
+      {label && (
+        <Text className="mb-1 text-[14px] font-semibold text-[#244B35]">
+          {label}
         </Text>
-      </Pressable>
-
-      {open && (
-        <View
-          className={`mt-2 bg-white p-3 rounded-xl shadow-md ${contentClassName ?? ""}`}
-        >
-          <View className="flex-row flex-wrap">
-            {days.map((d) => {
-              const isSelected = d === value?.getDate();
-              return (
-                <Pressable
-                  key={d}
-                  onPress={() => {
-                    const newDate = value ? new Date(value) : new Date();
-                    newDate.setDate(d);
-                    onChange(newDate);
-                    setOpen(false);
-                  }}
-                  className={` items-center p-2 ${
-                    isSelected ? selectedItemClassName : (itemClassName ?? "")
-                  }`}
-                >
-                  <Text
-                    className={`${
-                      isSelected ? "font-semibold text-black" : ""
-                    }`}
-                  >
-                    {d}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
       )}
 
-      {error && <Text className="text-red-500 mt-1 text-xs">{error}</Text>}
+      <Animated.View
+        style={animatedBorder}
+        className={cn(
+          "relative border rounded-lg px-3",
+          disabled && "opacity-50 bg-gray-100",
+          className
+        )}
+      >
+        <Pressable
+          disabled={disabled}
+          onPress={() => {
+            setFocused(true);
+            setShow(true);
+          }}
+          className="flex-row items-center min-h-[40px]"
+        >
+          <Text className="flex-1 text-base font-BeVietnamPro py-3 text-[#244B35]">
+            {value?.toLocaleDateString("vi-VN") || "Chọn ngày"}
+          </Text>
+        </Pressable>
+      </Animated.View>
+
+      {error && <Text className="text-red-500 mt-1 text-sm">{error}</Text>}
+
+      {show && (
+        <DateTimePicker
+          value={value || new Date()}
+          mode="date"
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+          minimumDate={minimumDate}
+          maximumDate={maximumDate}
+          onChange={(_, selectedDate) => {
+            setShow(false);
+            setFocused(false);
+            if (selectedDate) onChange(selectedDate);
+          }}
+          accentColor="#244B35"
+        />
+      )}
     </View>
   );
 }
