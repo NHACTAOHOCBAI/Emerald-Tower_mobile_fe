@@ -1,16 +1,31 @@
-import MultiImageUpload from "@/components/ui/MultiImageUpload";
+import DatePicker from "@/components/ui/DatePicker";
 import { useState } from "react";
-import { View } from "react-native";
-
+import { Text, View } from "react-native";
+const ITEMS = [
+  {
+    key: "pending",
+    label: "Pending",
+    quantity: 2,
+    content: <Text>Pending</Text>,
+  },
+  {
+    key: "completed",
+    label: "Completed",
+    quantity: 10,
+    content: <Text>Completed</Text>,
+  },
+] as const;
 export default function Screen() {
-  const [photos, setPhotos] = useState<string[]>([]);
-
+  const [date, setDate] = useState(new Date());
   return (
-    <View className="p-4 mt-10">
-      <MultiImageUpload value={photos} onChange={setPhotos} max={1} />;
-      {/* <Text className="mt-4 text-gray-500">
-        Link ảnh: {photos ?? "Chưa có ảnh"}
-      </Text> */}
+    <View className="p-[20px]">
+      <DatePicker
+        className="w-[200px]"
+        value={date}
+        onChange={setDate}
+        placeholder="Chọn ngày sinh"
+      />
+      {/* <Tab items={ITEMS} defaultValue="pending" /> */}
     </View>
   );
 }
