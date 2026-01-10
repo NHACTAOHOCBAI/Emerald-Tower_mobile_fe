@@ -95,20 +95,6 @@ export default function MyBookingsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerClassName="p-5"
       >
-        {activeTab === 'pending' && filteredBookings.length > 0 && (
-          <View className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
-            <Text className="text-sm font-semibold text-orange-800 mb-1">
-              ⏰ Hết hạn trong{' '}
-              <Text className="font-bold">
-                {getPendingTimeRemaining(filteredBookings[0])}
-              </Text>
-            </Text>
-            <Text className="text-xs text-orange-700">
-              Vui lòng thanh toán trước khi hết thời gian giữ chỗ
-            </Text>
-          </View>
-        )}
-
         {filteredBookings.length === 0 ? (
           <View className="py-20 items-center">
             <Text className="text-gray-500 text-center">
