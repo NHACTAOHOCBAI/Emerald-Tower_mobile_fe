@@ -61,7 +61,7 @@ export default function MyBookingsScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-gray-50">
       <CustomHeader title="Ví dịch vụ" />
       <View className="px-5 py-4">
         <View className="flex-row gap-2 mb-4">
