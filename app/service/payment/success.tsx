@@ -3,7 +3,7 @@ import { PaymentMethod, getPaymentMethodLabel } from '@/types/service';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Href, router, useLocalSearchParams } from 'expo-router';
-import { CheckCircle, Download, FileText } from 'lucide-react-native';
+import { CheckCircle, Download, Share2 } from 'lucide-react-native';
 import {
   Alert,
   ScrollView,
@@ -134,31 +134,31 @@ export default function PaymentSuccessScreen() {
 
           <View className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
             <Text className="text-sm text-blue-800">
-              📌 Lưu ý: Vui lòng có mặt đúng giờ.
+              📌 Lưu ý: Vui lòng xuất trình vé điện tử/vé giấy/cung cấp sđt cho
+              bảo vệ/tiếp tân để sử dụng dịch vụ.
             </Text>
           </View>
 
-          <View className="flex-row gap-3 mb-4">
+          <View className="flex-row gap-3">
             <TouchableOpacity
               onPress={handleShare}
-              className="flex-1 bg-[#C89F6C] py-4 rounded-lg flex-row items-center justify-center"
+              className="flex-1 bg-[#E09B6B] py-4 rounded-xl flex-row items-center justify-center shadow-sm"
             >
-              <FileText size={20} color="white" />
-              <Text className="text-white font-semibold ml-2">Trạng chủ</Text>
+              <Share2 size={18} color="white" className="mr-2" />
+              <Text className="text-white font-bold ml-2">Chia sẻ</Text>
             </TouchableOpacity>
-
             <TouchableOpacity
               onPress={handleDownloadPDF}
-              className="flex-1 bg-white border-2 border-[#244B35] py-4 rounded-lg flex-row items-center justify-center"
+              className="flex-1 bg-white border-2 border-[#244B35] py-4 rounded-xl flex-row items-center justify-center"
             >
-              <Download size={20} color="#244B35" />
-              <Text className="text-[#244B35] font-semibold ml-2">Tải PDF</Text>
+              <Download size={18} color="#244B35" className="mr-2" />
+              <Text className="text-[#244B35] font-bold ml-2">Tải PDF</Text>
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity
             onPress={handleBackToHome}
-            className="bg-[#244B35] py-4 rounded-lg"
+            className="bg-[#244B35] py-4 rounded-lg mt-4"
           >
             <Text className="text-white text-center font-bold text-base">
               Về trang chủ

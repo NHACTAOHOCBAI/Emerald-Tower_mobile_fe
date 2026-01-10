@@ -122,29 +122,6 @@ export default function MyBookingsScreen() {
                 booking={booking}
                 onPress={() => handlePressBooking(booking.id)}
               />
-
-              {booking.status === BookingStatus.PENDING && (
-                <TouchableOpacity
-                  className="bg-[#C89F6C] py-3 rounded-lg -mt-2 mb-3"
-                  onPress={() =>
-                    router.push({
-                      pathname: '/service/payment/[id]',
-                      params: {
-                        id: booking.service_id,
-                        date: booking.date,
-                        slots: JSON.stringify([
-                          `${booking.timestamps.start}-${booking.timestamps.end}`,
-                        ]),
-                        total: booking.total,
-                      },
-                    } as any)
-                  }
-                >
-                  <Text className="text-white text-center font-semibold">
-                    Thanh toán
-                  </Text>
-                </TouchableOpacity>
-              )}
             </View>
           ))
         )}
