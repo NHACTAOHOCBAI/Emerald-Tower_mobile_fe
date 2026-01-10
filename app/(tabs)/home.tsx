@@ -66,7 +66,7 @@ export default function HomeScreen() {
       id: 1,
       icon: Wrench,
       label: 'Ví dịch vụ',
-      route: '/service',
+      route: '/service/bookings',
     },
     {
       id: 2,
