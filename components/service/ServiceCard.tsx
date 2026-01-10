@@ -1,4 +1,5 @@
 import { Service } from '@/types/service';
+import { formatDuration } from '@/utils/formatDuration';
 import { Image, Text, TouchableOpacity, View } from 'react-native';
 
 interface ServiceCardProps {
@@ -8,15 +9,12 @@ interface ServiceCardProps {
 
 export default function ServiceCard({ service, onPress }: ServiceCardProps) {
   const isFree = service.unit_price === 0;
-  const priceText = isFree
-    ? 'Free'
-    : `${service.unit_price / 1000}K/${service.unit}`;
 
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="w-[48%] mb-3 bg-white rounded-lg"
-      activeOpacity={0.7}
+      className="w-[48%] mb-4 bg-white rounded-xl shadow-sm overflow-hidden"
+      activeOpacity={0.8}
     >
       <Image
         source={{ uri: service.url }}
@@ -26,15 +24,34 @@ export default function ServiceCard({ service, onPress }: ServiceCardProps) {
 
       <View className="p-3">
         <Text
-          className="text-sm font-semibold text-gray-800 mb-2"
+          className="text-[15px] font-bold text-gray-800 mb-2"
           numberOfLines={1}
         >
           {service.name}
         </Text>
+
         <View className="flex-row items-center justify-between">
-          <Text className="text-xs font-medium text-gray-800">{priceText}</Text>
-          <View className="bg-[#244B35] px-3 py-1.5 rounded-md">
-            <Text className="text-white text-xs font-medium">Xem</Text>
+          <View className="flex-row items-baseline">
+            {isFree ? (
+              <Text className="text-[#3EAA6D] text-lg font-bold uppercase italic">
+                Free
+              </Text>
+            ) : (
+              <>
+                <Text className="text-[#E09B6B] text-lg font-bold">
+                  {service.unit_price / 1000}K
+                </Text>
+                <Text className="text-[#244B35] text-[10px] font-semibold ml-0.5">
+                  /{formatDuration(service.unit)}
+                </Text>
+              </>
+            )}
+          </View>
+
+          <View className="bg-[#244B35] px-2.5 py-1.5 rounded-lg">
+            <Text className="text-white text-[10px] font-bold uppercase">
+              Xem
+            </Text>
           </View>
         </View>
       </View>
