@@ -1,21 +1,21 @@
 import NotificationCard from '@/components/notification/NotificationCard';
 import NotificationTabs from '@/components/notification/NotificationTabs';
+import { CustomHeader } from '@/components/ui/CustomHeader';
 import { MOCK_NOTIFICATIONS } from '@/constants/mockNotificationData';
 import { Notification } from '@/types/notification';
 import { router } from 'expo-router';
-import { ChevronLeft, Search, SlidersHorizontal } from 'lucide-react-native';
+import { Search } from 'lucide-react-native';
 import { useState } from 'react';
 import {
   ActionSheetIOS,
   Alert,
   Platform,
-  SafeAreaView,
   ScrollView,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function NotificationScreen() {
   const [activeTab, setActiveTab] = useState<string>('ALL');
@@ -79,37 +79,24 @@ export default function NotificationScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="bg-[#244B35] pt-4 pb-6">
-        <View className="px-5 flex-row items-center justify-between mb-4">
-          <View className="flex-row items-center flex-1">
-            <TouchableOpacity onPress={() => router.back()} className="mr-3">
-              <ChevronLeft size={24} color="white" />
-            </TouchableOpacity>
-            <Text className="text-lg font-bold text-white">Thông báo</Text>
-          </View>
-          <View className="flex-row gap-3">
-            <TouchableOpacity>
-              <Search size={24} color="white" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handlePressFilter}>
-              <SlidersHorizontal size={24} color="white" />
-            </TouchableOpacity>
-          </View>
+      <CustomHeader
+        title="Thông báo"
+        backgroundColor="bg-[#244B35]"
+        textColor="text-white"
+        iconColor="white"
+        showBorder={false}
+      >
+        <View className="bg-white/20 backdrop-blur-lg rounded-full flex-row items-center px-4 py-2">
+          <Search size={20} color="white" />
+          <TextInput
+            placeholder="Tìm kiếm thông báo..."
+            placeholderTextColor="rgba(255,255,255,0.6)"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            className="flex-1 ml-2 text-white"
+          />
         </View>
-
-        <View className="px-5">
-          <View className="bg-white/20 backdrop-blur-lg rounded-full flex-row items-center px-4 py-2">
-            <Search size={20} color="white" />
-            <TextInput
-              placeholder="Tìm kiếm thông báo..."
-              placeholderTextColor="rgba(255,255,255,0.6)"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              className="flex-1 ml-2 text-white"
-            />
-          </View>
-        </View>
-      </View>
+      </CustomHeader>
 
       <View className="pt-4">
         <NotificationTabs activeTab={activeTab} onChangeTab={setActiveTab} />

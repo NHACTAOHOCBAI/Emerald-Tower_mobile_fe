@@ -1,16 +1,10 @@
+import { CustomHeader } from '@/components/ui/CustomHeader';
 import { MOCK_VOTINGS_WITH_STATUS } from '@/constants/mockVotingData';
 import { Option } from '@/types/voting';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
 import { useState } from 'react';
-import {
-  Alert,
-  SafeAreaView,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function VotingDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -53,12 +47,7 @@ export default function VotingDetailScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="bg-white px-5 py-4 flex-row items-center border-b border-gray-100">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3">
-          <ChevronLeft size={24} color="#1F2937" />
-        </TouchableOpacity>
-        <Text className="text-lg font-bold text-gray-800">Biểu quyết</Text>
-      </View>
+      <CustomHeader title="Biểu quyết" />
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="px-5 py-4">

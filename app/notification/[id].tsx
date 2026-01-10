@@ -1,23 +1,18 @@
+import { CustomHeader } from '@/components/ui/CustomHeader';
 import { MOCK_NOTIFICATIONS } from '@/constants/mockNotificationData';
 import { getNotiTypeColor, getNotiTypeLabel } from '@/types/notification';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { router, useLocalSearchParams } from 'expo-router';
-import {
-  AlertCircle,
-  ChevronLeft,
-  Clock,
-  Download,
-  MapPin,
-} from 'lucide-react-native';
+import { useLocalSearchParams } from 'expo-router';
+import { AlertCircle, Clock, Download, MapPin } from 'lucide-react-native';
 import {
   Linking,
-  SafeAreaView,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function NotificationDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -49,12 +44,7 @@ export default function NotificationDetailScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="bg-white px-5 py-4 flex-row items-center border-b border-gray-100">
-        <TouchableOpacity onPress={() => router.back()} className="mr-3">
-          <ChevronLeft size={24} color="#1F2937" />
-        </TouchableOpacity>
-        <Text className="text-lg font-bold text-gray-800">Chi tiết</Text>
-      </View>
+      <CustomHeader title="Chi tiết" />
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="px-5 py-4">
