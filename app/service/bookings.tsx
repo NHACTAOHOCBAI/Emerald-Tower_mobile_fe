@@ -95,20 +95,6 @@ export default function MyBookingsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerClassName="p-5"
       >
-        {activeTab === 'pending' && filteredBookings.length > 0 && (
-          <View className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
-            <Text className="text-sm font-semibold text-orange-800 mb-1">
-              ⏰ Hết hạn trong{' '}
-              <Text className="font-bold">
-                {getPendingTimeRemaining(filteredBookings[0])}
-              </Text>
-            </Text>
-            <Text className="text-xs text-orange-700">
-              Vui lòng thanh toán trước khi hết thời gian giữ chỗ
-            </Text>
-          </View>
-        )}
-
         {filteredBookings.length === 0 ? (
           <View className="py-20 items-center">
             <Text className="text-gray-500 text-center">
@@ -122,29 +108,6 @@ export default function MyBookingsScreen() {
                 booking={booking}
                 onPress={() => handlePressBooking(booking.id)}
               />
-
-              {booking.status === BookingStatus.PENDING && (
-                <TouchableOpacity
-                  className="bg-[#C89F6C] py-3 rounded-lg -mt-2 mb-3"
-                  onPress={() =>
-                    router.push({
-                      pathname: '/service/payment/[id]',
-                      params: {
-                        id: booking.service_id,
-                        date: booking.date,
-                        slots: JSON.stringify([
-                          `${booking.timestamps.start}-${booking.timestamps.end}`,
-                        ]),
-                        total: booking.total,
-                      },
-                    } as any)
-                  }
-                >
-                  <Text className="text-white text-center font-semibold">
-                    Thanh toán
-                  </Text>
-                </TouchableOpacity>
-              )}
             </View>
           ))
         )}

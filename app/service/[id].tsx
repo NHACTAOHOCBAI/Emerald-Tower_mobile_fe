@@ -5,6 +5,7 @@ import {
   getMockSlotAvailability,
 } from '@/constants/mockServiceData';
 import { getDisplayDate } from '@/utils/displayDate';
+import { formatDuration } from '@/utils/formatDuration';
 import { format } from 'date-fns';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Calendar } from 'lucide-react-native';
@@ -66,6 +67,7 @@ export default function ServiceDetailScreen() {
   };
 
   const total = service.unit_price * selectedSlots.length;
+  const isFree = service.unit_price === 0;
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
@@ -87,11 +89,21 @@ export default function ServiceDetailScreen() {
                 {service.description}
               </Text>
             </View>
-            <View className="bg-[#244B35] px-4 py-2 flex-row">
-              <Text className="text-[#FFA11D] text-lg font-bold text-[30px]">
-                {service.unit_price / 1000}K
-              </Text>
-              <Text className="text-white text-lg">{'  '}/1h</Text>
+            <View className="bg-[#244B35] px-4 py-2 flex-row items-baseline">
+              {isFree ? (
+                <Text className="text-[#FFA11D] text-[30px] font-bold uppercase italic">
+                  Free
+                </Text>
+              ) : (
+                <>
+                  <Text className="text-[#FFA11D] font-bold text-[30px]">
+                    {service.unit_price / 1000}K
+                  </Text>
+                  <Text className="text-white text-base ml-1">
+                    /{formatDuration(service.unit)}
+                  </Text>
+                </>
+              )}
             </View>
           </View>
         </View>
