@@ -1,8 +1,10 @@
 import { CustomHeader } from '@/components/ui/CustomHeader';
+import DatePicker from '@/components/ui/DatePicker';
 import {
   MOCK_SERVICES,
   getMockSlotAvailability,
 } from '@/constants/mockServiceData';
+import { getDisplayDate } from '@/utils/displayDate';
 import { format } from 'date-fns';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Calendar } from 'lucide-react-native';
@@ -66,7 +68,7 @@ export default function ServiceDetailScreen() {
   const total = service.unit_price * selectedSlots.length;
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-gray-50">
       <CustomHeader title={service.name} />
       <ScrollView showsVerticalScrollIndicator={false}>
         <Image
@@ -75,45 +77,73 @@ export default function ServiceDetailScreen() {
           resizeMode="cover"
         />
 
-        <View className="bg-[#244B35] rounded-lg p-4 mb-4">
-          <Text className="text-white/80 text-sm mb-1">
-            {service.open_hour} - {service.close_hour} hàng ngày
-          </Text>
-          <Text className="text-white text-lg mb-2">{service.description}</Text>
-          <View className="bg-white/20 backdrop-blur-sm rounded-lg p-3 flex-row items-center justify-between">
-            <Text className="text-white text-sm">
-              Giá mỗi {service.unit} phút:
-            </Text>
-            <Text className="text-white text-2xl font-bold">
-              {service.unit_price / 1000}K<Text className="text-base">/1h</Text>
-            </Text>
+        <View className="py-4 pl-4 mb-4">
+          <View className="flex-row justify-between items-start">
+            <View className="flex-1">
+              <Text className="text-[#E09B6B] text-sm mb-1 font-medium">
+                {service.open_hour} - {service.close_hour} hàng ngày
+              </Text>
+              <Text className="text-gray-800 text-base pr-4">
+                {service.description}
+              </Text>
+            </View>
+            <View className="bg-[#244B35] px-4 py-2 flex-row">
+              <Text className="text-[#FFA11D] text-lg font-bold text-[30px]">
+                {service.unit_price / 1000}K
+              </Text>
+              <Text className="text-white text-lg">{'  '}/1h</Text>
+            </View>
           </View>
         </View>
 
-        {/* Date selector - Hôm nay button */}
-        <TouchableOpacity
-          className="bg-[#C89F6C] py-3 px-4 rounded-lg mb-4 flex-row items-center justify-between"
-          onPress={() => setSelectedDate(new Date())}
-        >
-          <View className="flex-row items-center">
-            <Calendar size={20} color="white" />
-            <Text className="text-white font-semibold ml-2">Hôm nay</Text>
-          </View>
-          <Text className="text-white">
-            {format(selectedDate, 'dd/MM/yyyy')}
-          </Text>
-        </TouchableOpacity>
+        <View className="mx-4 mb-4">
+          <DatePicker
+            value={selectedDate}
+            onChange={(newDate) => {
+              setSelectedDate(newDate);
+              setSelectedSlots([]);
+            }}
+            className="bg-[#E09B6B] border-0"
+          >
+            <View className="flex-1 flex-row items-center justify-between">
+              <View className="flex-row items-center">
+                <Calendar size={20} color="white" />
+                <Text className="text-white font-semibold ml-2 text-base">
+                  {getDisplayDate(selectedDate)}
+                </Text>
+              </View>
+
+              <Text className="text-white text-base">
+                {format(selectedDate, 'dd/MM/yyyy')}
+              </Text>
+            </View>
+          </DatePicker>
+        </View>
 
         {/* Time slots */}
-        <Text className="text-base font-bold text-gray-800 mb-3">
+        <Text className="mb-1 text-[14px] font-semibold text-[#244B35] mb-3 mx-4">
           Chọn khung giờ
         </Text>
 
-        <View className="flex-row flex-wrap gap-2">
+        <View className="flex-row flex-wrap gap-3 px-4">
           {slots.map((slot) => {
             const slotKey = `${slot.start_time}-${slot.end_time}`;
             const isSelected = selectedSlots.includes(slotKey);
             const isFull = slot.remaining_slot === 0;
+
+            let containerStyle = '';
+            let textStyle = '';
+
+            if (isFull) {
+              containerStyle = 'bg-white border border-gray-400';
+              textStyle = 'text-gray-500';
+            } else if (isSelected) {
+              containerStyle = 'bg-[#244B35]';
+              textStyle = 'text-white';
+            } else {
+              containerStyle = 'bg-white border border-[#3EAA6D]';
+              textStyle = 'text-[#3EAA6D]';
+            }
 
             return (
               <TouchableOpacity
@@ -122,36 +152,12 @@ export default function ServiceDetailScreen() {
                   !isFull && handleSelectSlot(slot.start_time, slot.end_time)
                 }
                 disabled={isFull}
-                className={`px-4 py-3 rounded-lg ${
-                  isFull
-                    ? 'bg-gray-100'
-                    : isSelected
-                      ? 'bg-[#244B35]'
-                      : 'bg-white border border-gray-300'
-                }`}
-                style={{ minWidth: '30%' }}
+                className={`px-4 py-3 rounded-md flex-1 basis-[30%] ${containerStyle}`}
               >
                 <Text
-                  className={`text-center font-semibold ${
-                    isFull
-                      ? 'text-gray-400'
-                      : isSelected
-                        ? 'text-white'
-                        : 'text-gray-700'
-                  }`}
+                  className={`text-center text-sm font-medium ${textStyle}`}
                 >
-                  {slot.start_time} -
-                </Text>
-                <Text
-                  className={`text-center font-semibold ${
-                    isFull
-                      ? 'text-gray-400'
-                      : isSelected
-                        ? 'text-white'
-                        : 'text-gray-700'
-                  }`}
-                >
-                  {slot.end_time}
+                  {slot.start_time} - {slot.end_time}
                 </Text>
               </TouchableOpacity>
             );
@@ -159,7 +165,6 @@ export default function ServiceDetailScreen() {
         </View>
       </ScrollView>
 
-      {/* Fixed bottom button */}
       <View className="bg-white px-5 py-4 border-t border-gray-100">
         <View className="flex-row items-center justify-between mb-3">
           <Text className="text-sm text-gray-600">Tổng cộng:</Text>
@@ -168,7 +173,7 @@ export default function ServiceDetailScreen() {
           </Text>
         </View>
         <TouchableOpacity
-          className="bg-[#C89F6C] py-4 rounded-lg"
+          className="bg-[#E09B6B] py-4 rounded-lg"
           onPress={handleBooking}
         >
           <Text className="text-white text-center font-bold text-base">
