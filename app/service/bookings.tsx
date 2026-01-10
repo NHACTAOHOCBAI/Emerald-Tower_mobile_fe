@@ -36,7 +36,7 @@ const TABS: Tab[] = [
 ];
 
 export default function MyBookingsScreen() {
-  const [activeTab, setActiveTab] = useState<TabKey>('mine');
+  const [activeTab, setActiveTab] = useState<TabKey>('pending');
 
   const currentTab = TABS.find((t) => t.key === activeTab);
   const filteredBookings = MOCK_BOOKINGS.filter(
@@ -63,7 +63,7 @@ export default function MyBookingsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
       <CustomHeader title="Ví dịch vụ" />
-      <View className="bg-white px-5 py-4 border-b border-gray-100">
+      <View className="px-5 py-4">
         <View className="flex-row gap-2 mb-4">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.key;
