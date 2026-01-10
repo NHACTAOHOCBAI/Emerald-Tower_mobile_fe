@@ -29,7 +29,7 @@ export default function ServiceScreen() {
   });
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-gray-50">
       <CustomHeader
         title="Dịch vụ"
         rightComponent={

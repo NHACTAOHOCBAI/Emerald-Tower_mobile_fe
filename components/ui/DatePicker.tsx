@@ -1,12 +1,12 @@
-import { cn } from "@/utils/cn";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { useEffect, useState } from "react";
-import { Platform, Pressable, Text, View } from "react-native";
+import { cn } from '@/utils/cn';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { useEffect, useState } from 'react';
+import { Platform, Pressable, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
-} from "react-native-reanimated";
+} from 'react-native-reanimated';
 
 type Props = {
   value: Date;
@@ -17,17 +17,21 @@ type Props = {
   error?: string;
   disabled?: boolean;
   className?: string;
+  hideText?: boolean;
+  children?: React.ReactNode;
 };
 
 export default function DatePicker({
   value,
   onChange,
-  label = "Chọn ngày",
+  label = 'Chọn ngày',
   minimumDate,
   maximumDate,
   error,
   disabled,
   className,
+  hideText = false,
+  children,
 }: Props) {
   const [show, setShow] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -40,7 +44,7 @@ export default function DatePicker({
 
   const animatedBorder = useAnimatedStyle(() => ({
     borderColor: withTiming(
-      error ? "#ef4444" : borderAnim.value ? "#244B35" : "#D9D9D9",
+      error ? '#ef4444' : borderAnim.value ? '#244B35' : '#D9D9D9',
       { duration: 160 }
     ),
   }));
@@ -48,7 +52,7 @@ export default function DatePicker({
   return (
     <View>
       {label && (
-        <Text className="mb-1 text-[14px] font-semibold text-[#244B35]">
+        <Text className="mb-3 text-[14px] font-semibold text-[#244B35]">
           {label}
         </Text>
       )}
@@ -56,8 +60,8 @@ export default function DatePicker({
       <Animated.View
         style={animatedBorder}
         className={cn(
-          "relative border rounded-lg px-3",
-          disabled && "opacity-50 bg-gray-100",
+          'relative border rounded-lg px-3 overflow-hidden',
+          disabled && 'opacity-50 bg-gray-100',
           className
         )}
       >
@@ -67,11 +71,20 @@ export default function DatePicker({
             setFocused(true);
             setShow(true);
           }}
-          className="flex-row items-center min-h-[40px]"
+          className="flex-row items-center min-h-[48px]"
         >
-          <Text className="flex-1 text-base font-BeVietnamPro py-3 text-[#244B35]">
-            {value?.toLocaleDateString("vi-VN") || "Chọn ngày"}
-          </Text>
+          {children ? (
+            children
+          ) : (
+            <Text
+              className={cn(
+                'flex-1 text-base font-BeVietnamPro py-3 text-[#244B35]',
+                hideText && 'opacity-0'
+              )}
+            >
+              {value?.toLocaleDateString('vi-VN') || 'Chọn ngày'}
+            </Text>
+          )}
         </Pressable>
       </Animated.View>
 
@@ -81,7 +94,7 @@ export default function DatePicker({
         <DateTimePicker
           value={value || new Date()}
           mode="date"
-          display={Platform.OS === "ios" ? "spinner" : "default"}
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           minimumDate={minimumDate}
           maximumDate={maximumDate}
           onChange={(_, selectedDate) => {
