@@ -9,13 +9,13 @@ import {
   ActionSheetIOS,
   Alert,
   Platform,
-  SafeAreaView,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function NotificationScreen() {
   const [activeTab, setActiveTab] = useState<string>('ALL');
