@@ -28,8 +28,21 @@ export const CustomHeader = ({
 }: CustomHeaderProps) => {
   const router = useRouter();
 
-  const isHexColor = backgroundColor.startsWith('#');
-  const isTextHex = textColor.startsWith('#');
+  const handleBack = () => {
+    if (onBackPress) {
+      onBackPress();
+      return;
+    }
+
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.push("/(tabs)/home");
+    }
+  };
+
+  const isHexColor = backgroundColor.startsWith("#");
+  const isTextHex = textColor.startsWith("#");
 
   return (
     <View
@@ -39,10 +52,7 @@ export const CustomHeader = ({
       <View className="flex-row items-center justify-between min-h-[40px]">
         <View className="w-10">
           {showBackButton && (
-            <TouchableOpacity
-              onPress={onBackPress || (() => router.back())}
-              className="py-1"
-            >
+            <TouchableOpacity onPress={handleBack} className="py-1">
               <ChevronLeft size={28} color={iconColor} />
             </TouchableOpacity>
           )}
