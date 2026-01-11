@@ -1,14 +1,14 @@
 import { cn } from "@/utils/cn";
 import { Eye, EyeOff } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, TextInputProps, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
 
-interface BaseInputProps {
+interface BaseInputProps extends TextInputProps {
   value?: string;
   placeholder?: string;
   error?: string;
@@ -36,6 +36,7 @@ export default function BaseInput({
   rightIcon,
   onChangeText,
   className,
+  ...props
 }: BaseInputProps) {
   const [focused, setFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -80,6 +81,7 @@ export default function BaseInput({
             multiline={multiline}
             numberOfLines={numberOfLines}
             keyboardType={keyboardType}
+            {...props}
             className={cn(
               "flex-1 text-base font-BeVietnamPro py-3 text-[#244B35]",
               multiline && "text-start"
@@ -87,11 +89,7 @@ export default function BaseInput({
           />
           {isPassword ? (
             <Pressable onPress={() => setShowPassword(!showPassword)}>
-              {showPassword ? (
-                <EyeOff color="#6b7280" />
-              ) : (
-                <Eye color="#6b7280" />
-              )}
+              {showPassword ? <EyeOff color="#6b7280" /> : <Eye color="#6b7280" />}
             </Pressable>
           ) : (
             rightIcon

@@ -56,8 +56,13 @@ function TabIcon({
   focused: boolean;
 }) {
   return (
-    <View>
-      <Icon color={focused ? '#C8F2D1' : 'white'} />
+    <View
+      className="items-center justify-center p-4 rounded-lg"
+      style={{
+        backgroundColor: focused ? "rgba(200, 242, 209, 0.1)" : "transparent",
+      }}
+    >
+      <Icon color={focused ? "#E09B6B" : "#FFFFFF"} size={24} />
     </View>
   );
 }

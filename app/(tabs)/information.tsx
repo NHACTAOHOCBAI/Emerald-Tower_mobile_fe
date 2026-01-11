@@ -1,104 +1,68 @@
-import BaseInput from "@/components/ui/BaseInput";
-import MyButton from "@/components/ui/Button";
-import DatePicker from "@/components/ui/DatePicker";
-import MyDropdown from "@/components/ui/Dropdown";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { Controller, SubmitHandler, useForm } from "react-hook-form";
-import { View } from "react-native";
-import * as Yup from "yup";
-import { InferType } from "yup";
-// template form
-const loginSchema = Yup.object({
-  email: Yup.string().email("Email invalid").required("Email required"),
-  gender: Yup.string().required("Gender required"),
-  birthday: Yup.date().required("Birthday required"),
-  password: Yup.string().min(6).required(),
-});
+import { ApartmentTab } from "@/components/information/ApartmentTab";
+import { ResidentTab } from "@/components/information/ResidentTab";
+import { CustomHeader } from "@/components/ui/CustomHeader";
+import { MOCK_APARTMENT, MOCK_RESIDENT } from "@/constants/mockInformationData";
+import React, { useState } from "react";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-type LoginForm = InferType<typeof loginSchema>;
-export default function LoginScreen() {
-  const { control, handleSubmit } = useForm<LoginForm>({
-    resolver: yupResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      gender: "",
-      password: "",
-    },
-  });
-
-  const onSubmit: SubmitHandler<LoginForm> = (data) => {
-    console.log("Form data: ", data);
-  };
+export default function InformationScreen() {
+  const [activeTab, setActiveTab] = useState<"resident" | "apartment">("resident");
+  const [residentData] = useState(MOCK_RESIDENT);
+  const [apartmentData] = useState(MOCK_APARTMENT);
 
   return (
-    <View style={{ padding: 20 }} className="gap-4">
-      <Controller
-        control={control}
-        name="birthday"
-        defaultValue={new Date()} // ✅ bắt buộc nếu field date
-        render={({ field: { onChange, value }, fieldState: { error } }) => (
-          <DatePicker
-            value={value} // value luôn là Date
-            onChange={onChange}
-            label="Ngày sinh"
-            error={error?.message}
-            maximumDate={new Date()}
-          />
-        )}
+    <SafeAreaView className="flex-1 bg-[#F3F4F6]">
+      <CustomHeader
+        title="Thông tin cá nhân"
+        showBackButton={true}
+        textColor="#244B35"
+        backgroundColor="#F3F4F6"
       />
 
-      {/* Email */}
-      <Controller
-        control={control}
-        name="email"
-        render={({ field: { onChange, value }, fieldState: { error } }) => (
-          <BaseInput
-            placeholder="Email"
-            value={value}
-            onChangeText={onChange}
-            error={error?.message}
-            keyboardType="email-address"
-          />
-        )}
-      />
+      <View className="flex-row justify-center my-4 px-4">
+        <View className="flex-row bg-white border border-gray-200 rounded-full p-1 w-full max-w-[320px]">
+          <TouchableOpacity
+            onPress={() => setActiveTab("resident")}
+            className={`flex-1 py-2.5 rounded-full items-center ${
+              activeTab === "resident" ? "bg-[#244B35]" : "bg-transparent"
+            }`}
+          >
+            <Text
+              className={`font-BeVietnamProSemi text-sm ${
+                activeTab === "resident" ? "text-white" : "text-gray-400"
+              }`}
+            >
+              Cư dân
+            </Text>
+          </TouchableOpacity>
 
-      {/* Gender */}
-      <Controller
-        control={control}
-        name="gender"
-        render={({ field: { onChange, value }, fieldState: { error } }) => (
-          <MyDropdown
-            value={value}
-            placeholder="Chọn giới tính"
-            items={[
-              { label: "Nam", value: "male" },
-              { label: "Nữ", value: "female" },
-              { label: "Khác", value: "other" },
-            ]}
-            onSelect={onChange}
-            error={error?.message}
-          />
-        )}
-      />
+          <TouchableOpacity
+            onPress={() => setActiveTab("apartment")}
+            className={`flex-1 py-2.5 rounded-full items-center ${
+              activeTab === "apartment" ? "bg-[#244B35]" : "bg-transparent"
+            }`}
+          >
+            <Text
+              className={`font-BeVietnamProSemi text-sm ${
+                activeTab === "apartment" ? "text-white" : "text-gray-400"
+              }`}
+            >
+              Căn hộ
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
 
-      {/* Password */}
-      <Controller
-        control={control}
-        name="password"
-        render={({ field: { onChange, value }, fieldState: { error } }) => (
-          <BaseInput
-            placeholder="Password"
-            value={value}
-            onChangeText={onChange}
-            error={error?.message}
-            isPassword
-          />
-        )}
-      />
+      <ScrollView className="flex-1 px-4 mb-5" showsVerticalScrollIndicator={false}>
+        <View style={{ display: activeTab === "resident" ? "flex" : "none" }}>
+          <ResidentTab data={residentData} />
+        </View>
 
-      <MyButton className="w-full" onPress={handleSubmit(onSubmit)}>
-        Login
-      </MyButton>
-    </View>
+        <View style={{ display: activeTab === "apartment" ? "flex" : "none" }}>
+          <ApartmentTab data={apartmentData} />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
