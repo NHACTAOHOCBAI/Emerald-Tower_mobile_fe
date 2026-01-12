@@ -78,7 +78,7 @@ export default function DatePicker({
           ) : (
             <Text
               className={cn(
-                'flex-1 text-base font-BeVietnamPro py-3 text-[#244B35]',
+                'flex-1 text-base py-3 text-[#244B35]',
                 hideText && 'opacity-0'
               )}
             >

@@ -83,7 +83,7 @@ export default function BaseInput({
             keyboardType={keyboardType}
             {...props}
             className={cn(
-              "flex-1 text-base font-BeVietnamPro py-3 text-[#244B35]",
+              "flex-1 text-base py-3 text-[#244B35]",
               multiline && "text-start"
             )}
           />

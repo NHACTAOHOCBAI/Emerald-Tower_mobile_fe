@@ -13,23 +13,18 @@ export default function InformationScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#F3F4F6]">
-      <CustomHeader
-        title="Thông tin cá nhân"
-        showBackButton={true}
-        textColor="#244B35"
-        backgroundColor="#F3F4F6"
-      />
+      <CustomHeader title="Thông tin cá nhân" showBackButton={true} />
 
       <View className="flex-row justify-center my-4 px-4">
-        <View className="flex-row bg-white border border-gray-200 rounded-full p-1 w-full max-w-[320px]">
+        <View className="flex-row bg-white border border-gray-200 rounded-full p-1 w-full">
           <TouchableOpacity
             onPress={() => setActiveTab("resident")}
             className={`flex-1 py-2.5 rounded-full items-center ${
-              activeTab === "resident" ? "bg-[#244B35]" : "bg-transparent"
+              activeTab === "resident" ? "bg-main" : "bg-transparent"
             }`}
           >
             <Text
-              className={`font-BeVietnamProSemi text-sm ${
+              className={`text-sm font-bold ${
                 activeTab === "resident" ? "text-white" : "text-gray-400"
               }`}
             >
@@ -40,11 +35,11 @@ export default function InformationScreen() {
           <TouchableOpacity
             onPress={() => setActiveTab("apartment")}
             className={`flex-1 py-2.5 rounded-full items-center ${
-              activeTab === "apartment" ? "bg-[#244B35]" : "bg-transparent"
+              activeTab === "apartment" ? "bg-main" : "bg-transparent"
             }`}
           >
             <Text
-              className={`font-BeVietnamProSemi text-sm ${
+              className={`text-sm font-bold ${
                 activeTab === "apartment" ? "text-white" : "text-gray-400"
               }`}
             >
@@ -54,7 +49,7 @@ export default function InformationScreen() {
         </View>
       </View>
 
-      <ScrollView className="flex-1 px-4 mb-5" showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
         <View style={{ display: activeTab === "resident" ? "flex" : "none" }}>
           <ResidentTab data={residentData} />
         </View>
