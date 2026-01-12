@@ -26,7 +26,7 @@ export const ApartmentTab = ({ data }: ApartmentTabProps) => {
           <MapPin size={20} color="#244B35" style={{ marginTop: 2 }} />
           <View className="ml-3">
             <Text className="text-gray-400 text-sm">Địa chỉ đầy đủ</Text>
-            <Text className="text-foreground text-md mt-1 font-bold">
+            <Text className="text-foreground text-lg mt-1 font-bold">
               {data.fullAddress}
             </Text>
           </View>
@@ -46,7 +46,7 @@ const StatBox = ({
   color: string;
 }) => (
   <View className={`w-[48%] ${color} rounded-xl p-4 mb-4 items-center justify-center`}>
-    <Text className="text-gray-500 text-xs mb-1">{label}</Text>
+    <Text className="text-gray-500 text-sm mb-1">{label}</Text>
     <Text className="text-main text-lg font-bold">{value}</Text>
   </View>
 );

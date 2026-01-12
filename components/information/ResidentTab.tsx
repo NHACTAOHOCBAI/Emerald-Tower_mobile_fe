@@ -114,7 +114,7 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
                   <Calendar size={22} color="#4B5563" />
                 </View>
                 <View className="flex-1 ml-2">
-                  <Text className="text-gray-400 text-xs mb-1">Ngày sinh</Text>
+                  <Text className="text-gray-400 text-sm mb-1">Ngày sinh</Text>
                   {isEditing ? (
                     <DatePicker
                       label=""
@@ -146,7 +146,7 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
                   <Phone size={22} color="#4B5563" />
                 </View>
                 <View className="flex-1 ml-2">
-                  <Text className="text-gray-400 text-xs mb-1">Số điện thoại</Text>
+                  <Text className="text-gray-400 text-sm mb-1">Số điện thoại</Text>
                   {isEditing ? (
                     <BaseInput
                       placeholder="Nhập số điện thoại"
@@ -189,7 +189,7 @@ const InfoRow = ({ icon: Icon, label, value, isLastItem = false }: any) => (
       <Icon size={22} color="#4B5563" />
     </View>
     <View className="flex-1 ml-2">
-      <Text className="text-gray-400 text-xs mb-1">{label}</Text>
+      <Text className="text-gray-400 text-sm mb-1">{label}</Text>
       <Text className="text-foreground text-base font-bold">{value}</Text>
     </View>
   </View>
