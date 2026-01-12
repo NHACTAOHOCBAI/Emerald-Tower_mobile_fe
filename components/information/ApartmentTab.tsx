@@ -1,7 +1,7 @@
+import { ApartmentInfo } from "@/types/information";
 import { MapPin } from "lucide-react-native";
 import React from "react";
 import { Text, View } from "react-native";
-import { ApartmentInfo } from "@/types/information";
 
 interface ApartmentTabProps {
   data: ApartmentInfo;
@@ -10,14 +10,10 @@ interface ApartmentTabProps {
 export const ApartmentTab = ({ data }: ApartmentTabProps) => {
   return (
     <View className="mt-2">
-      <Text className="text-secondary font-BeVietnamProSemi text-lg mb-4">
-        Thông tin căn hộ
-      </Text>
+      <Text className="text-secondary text-lg mb-4 font-bold">Thông tin căn hộ</Text>
 
       <View className="bg-white rounded-2xl p-5 shadow-sm mb-6 border border-third">
-        <Text className="text-xl font-BeVietnamProBold text-main mb-6">
-          Phòng {data.code}
-        </Text>
+        <Text className="text-xl text-main mb-6 font-bold">Phòng {data.code}</Text>
 
         <View className="flex-row flex-wrap justify-between">
           <StatBox label="Diện tích" value={data.area} color="bg-third" />
@@ -29,10 +25,8 @@ export const ApartmentTab = ({ data }: ApartmentTabProps) => {
         <View className="flex-row items-start mt-2 pt-4 border-t border-gray-100">
           <MapPin size={20} color="#244B35" style={{ marginTop: 2 }} />
           <View className="ml-3">
-            <Text className="text-gray-400 font-BeVietnamPro text-sm">
-              Địa chỉ đầy đủ
-            </Text>
-            <Text className="text-foreground font-BeVietnamProMedium text-md mt-1">
+            <Text className="text-gray-400 text-sm">Địa chỉ đầy đủ</Text>
+            <Text className="text-foreground text-md mt-1 font-bold">
               {data.fullAddress}
             </Text>
           </View>
@@ -52,7 +46,7 @@ const StatBox = ({
   color: string;
 }) => (
   <View className={`w-[48%] ${color} rounded-xl p-4 mb-4 items-center justify-center`}>
-    <Text className="text-gray-500 font-BeVietnamPro text-xs mb-1">{label}</Text>
-    <Text className="text-main font-BeVietnamProBold text-lg">{value}</Text>
+    <Text className="text-gray-500 text-xs mb-1">{label}</Text>
+    <Text className="text-main text-lg font-bold">{value}</Text>
   </View>
 );

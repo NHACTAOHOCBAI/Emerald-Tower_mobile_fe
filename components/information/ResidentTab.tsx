@@ -79,9 +79,7 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
   return (
     <View className="mb-4">
       <View className="flex-row justify-between items-center mb-4 mt-2">
-        <Text className="text-secondary font-BeVietnamProSemi text-lg">
-          Thông tin chung
-        </Text>
+        <Text className="text-secondary text-lg font-bold">Thông tin chung</Text>
         <TouchableOpacity
           onPress={() => {
             if (isEditing) {
@@ -95,9 +93,7 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
           }`}
         >
           <Text
-            className={`text-xs font-BeVietnamProMedium ${
-              isEditing ? "text-white" : "text-secondary"
-            }`}
+            className={`text-xs font-bold ${isEditing ? "text-white" : "text-secondary"}`}
           >
             {isEditing ? "Lưu thay đổi" : "✎ Chỉnh sửa"}
           </Text>
@@ -118,9 +114,7 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
                   <Calendar size={22} color="#4B5563" />
                 </View>
                 <View className="flex-1 ml-2">
-                  <Text className="text-gray-400 font-BeVietnamPro text-xs mb-1">
-                    Ngày sinh
-                  </Text>
+                  <Text className="text-gray-400 text-xs mb-1">Ngày sinh</Text>
                   {isEditing ? (
                     <DatePicker
                       label=""
@@ -130,7 +124,7 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
                       maximumDate={new Date()}
                     />
                   ) : (
-                    <Text className="text-foreground font-BeVietnamProSemi text-base">
+                    <Text className="text-foreground text-base font-bold">
                       {formatDateToString(value)}
                     </Text>
                   )}
@@ -152,9 +146,7 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
                   <Phone size={22} color="#4B5563" />
                 </View>
                 <View className="flex-1 ml-2">
-                  <Text className="text-gray-400 font-BeVietnamPro text-xs mb-1">
-                    Số điện thoại
-                  </Text>
+                  <Text className="text-gray-400 text-xs mb-1">Số điện thoại</Text>
                   {isEditing ? (
                     <BaseInput
                       placeholder="Nhập số điện thoại"
@@ -168,9 +160,7 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
                       maxLength={12}
                     />
                   ) : (
-                    <Text className="text-foreground text-base font-BeVietnamProSemi">
-                      {value}
-                    </Text>
+                    <Text className="text-foreground text-base font-bold">{value}</Text>
                   )}
                 </View>
               </View>
@@ -179,9 +169,7 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
         </View>
       </View>
 
-      <Text className="text-secondary font-BeVietnamProSemi text-lg mb-4">
-        Tình trạng cư trú
-      </Text>
+      <Text className="text-secondary text-lg mb-4 font-bold">Tình trạng cư trú</Text>
       <View className="bg-white rounded-2xl p-5 shadow-sm border border-third">
         <InfoRow icon={Building} label="Tình trạng cư trú" value={data.residencyStatus} />
         <InfoRow
@@ -201,8 +189,8 @@ const InfoRow = ({ icon: Icon, label, value, isLastItem = false }: any) => (
       <Icon size={22} color="#4B5563" />
     </View>
     <View className="flex-1 ml-2">
-      <Text className="text-gray-400 font-BeVietnamPro text-xs mb-1">{label}</Text>
-      <Text className="text-foreground font-BeVietnamProSemi text-base">{value}</Text>
+      <Text className="text-gray-400 text-xs mb-1">{label}</Text>
+      <Text className="text-foreground text-base font-bold">{value}</Text>
     </View>
   </View>
 );

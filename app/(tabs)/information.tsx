@@ -13,12 +13,7 @@ export default function InformationScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#F3F4F6]">
-      <CustomHeader
-        title="Thông tin cá nhân"
-        showBackButton={true}
-        textColor="#244B35"
-        backgroundColor="#F3F4F6"
-      />
+      <CustomHeader title="Thông tin cá nhân" showBackButton={true} />
 
       <View className="flex-row justify-center my-4 px-4">
         <View className="flex-row bg-white border border-gray-200 rounded-full p-1 w-full max-w-[320px]">
@@ -29,7 +24,7 @@ export default function InformationScreen() {
             }`}
           >
             <Text
-              className={`font-BeVietnamProSemi text-sm ${
+              className={`text-sm font-bold ${
                 activeTab === "resident" ? "text-white" : "text-gray-400"
               }`}
             >
@@ -44,7 +39,7 @@ export default function InformationScreen() {
             }`}
           >
             <Text
-              className={`font-BeVietnamProSemi text-sm ${
+              className={`text-sm font-bold ${
                 activeTab === "apartment" ? "text-white" : "text-gray-400"
               }`}
             >
