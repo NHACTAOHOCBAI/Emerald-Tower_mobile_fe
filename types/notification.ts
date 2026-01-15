@@ -18,6 +18,7 @@ export interface Notification {
   type: NotiType;
   is_urgent: boolean;
   created_at: string;
+  published_at: string;
   updated_at: string;
   file_urls: string[];
   target_blocks: TargetBlock[];

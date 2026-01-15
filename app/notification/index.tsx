@@ -74,7 +74,8 @@ export default function NotificationScreen() {
   const sortedNotifications = [...filteredNotifications].sort((a, b) => {
     if (a.is_read === b.is_read) {
       return (
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        new Date(b?.published_at || b.created_at).getTime() -
+        new Date(a?.published_at || a.created_at).getTime()
       );
     }
     return a.is_read ? 1 : -1;
