@@ -33,7 +33,7 @@ export const AccordionItem = ({
   return (
     <View
       className={`bg-white rounded-xl mb-4 border ${
-        isSelected ? "border-secondary" : "border-gray-100"
+        isSelected ? "border-secondary" : "border-0"
       } shadow-sm overflow-hidden`}
     >
       <View className="p-4 flex-row items-center justify-between">
@@ -69,16 +69,16 @@ export const AccordionItem = ({
         </View>
       </View>
 
+      <View className="h-[1px] bg-gray-300 w-full" />
+
       {expanded && (
         <View className="px-4 pb-4">
-          <View className="h-[1px] bg-gray-100 w-full" />
-
           {data.items.map((item) => {
             const IconData = ICONS[item.type];
             return (
               <View
                 key={item.id}
-                className="flex-row justify-between items-center py-3.5 last:pb-0"
+                className="flex-row justify-between items-center py-4 last:pb-1"
               >
                 <View className="flex-row items-center">
                   <View
@@ -101,7 +101,7 @@ export const AccordionItem = ({
             );
           })}
 
-          <View className="h-[1px] bg-gray-100 w-full my-4" />
+          <View className="h-[1px] bg-gray-200 w-full my-4" />
 
           <View className="flex-row justify-between items-center">
             <Text className="font-bold text-main text-base">Tổng cộng</Text>
