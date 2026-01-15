@@ -1,11 +1,14 @@
-import type { ReactNode } from "react";
-import { useEffect } from "react";
-import { useFonts } from "expo-font";
-import { Stack, router, useSegments } from "expo-router";
-import { ActivityIndicator, Alert, Text, View } from "react-native";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import "../global.css";
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useFonts } from 'expo-font';
+import { Stack, router, useSegments } from 'expo-router';
+import type { ReactNode } from 'react';
+import { useEffect } from 'react';
+import { ActivityIndicator, Alert, Text, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import '../global.css';
+
+const queryClient = new QueryClient();
 
 (Text as any).defaultProps = (Text as any).defaultProps || {};
 (Text as any).defaultProps.style = { fontFamily: 'BeVietnamPro' };
@@ -13,26 +16,24 @@ import "../global.css";
 const AuthGate = ({ children }: { children: ReactNode }) => {
   const { user, isLoading, logout } = useAuth();
   const segments = useSegments();
-  const inAuthGroup = segments[0] === "(auth)";
+  const inAuthGroup = segments[0] === '(auth)';
 
   useEffect(() => {
     if (isLoading) return;
 
-    if (user?.role && user.role !== "RESIDENT") {
-      Alert.alert("Đăng nhập thất bại", "Sai tài khoản hoặc mật khẩu.");
+    if (user?.role && user.role !== 'RESIDENT') {
+      Alert.alert('Đăng nhập thất bại', 'Sai tài khoản hoặc mật khẩu.');
       void logout();
-      router.replace("/(auth)/login");
+      router.replace('/(auth)/login');
       return;
     }
-if (user && inAuthGroup) {
-      router.replace("/(tabs)/home");
+    if (user && inAuthGroup) {
+      router.replace('/(tabs)/home');
     }
     if (!user && !inAuthGroup) {
-      router.replace("/(auth)/login");
+      router.replace('/(auth)/login');
       return;
     }
-
-    
   }, [user, inAuthGroup, isLoading, logout]);
 
   if (isLoading) {
@@ -48,10 +49,10 @@ if (user && inAuthGroup) {
 
 export default function RootLayout() {
   const [loaded] = useFonts({
-    BeVietnamPro: require("../assets/fonts/BeVietnamPro-Regular.ttf"),
-    BeVietnamProMedium: require("../assets/fonts/BeVietnamPro-Medium.ttf"),
-    BeVietnamProSemiBold: require("../assets/fonts/BeVietnamPro-SemiBold.ttf"),
-    BeVietnamProBold: require("../assets/fonts/BeVietnamPro-Bold.ttf"),
+    BeVietnamPro: require('../assets/fonts/BeVietnamPro-Regular.ttf'),
+    BeVietnamProMedium: require('../assets/fonts/BeVietnamPro-Medium.ttf'),
+    BeVietnamProSemiBold: require('../assets/fonts/BeVietnamPro-SemiBold.ttf'),
+    BeVietnamProBold: require('../assets/fonts/BeVietnamPro-Bold.ttf'),
   });
 
   if (!loaded) {
@@ -63,15 +64,17 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <SafeAreaProvider>
-        <AuthGate>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="(tabs)" />
-          </Stack>
-        </AuthGate>
-      </SafeAreaProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <SafeAreaProvider>
+          <AuthGate>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(auth)" />
+              <Stack.Screen name="(tabs)" />
+            </Stack>
+          </AuthGate>
+        </SafeAreaProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
