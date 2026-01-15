@@ -1,18 +1,20 @@
+import { showNotificationActionsSheet } from '@/components/notification/NotificationActionSheet';
 import NotificationCard from '@/components/notification/NotificationCard';
 import NotificationTabs from '@/components/notification/NotificationTabs';
 import { CustomHeader } from '@/components/ui/CustomHeader';
-import { MOCK_NOTIFICATIONS } from '@/constants/mockNotificationData';
+import { NotificationService } from '@/services/notification.service';
 import { Notification } from '@/types/notification';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { Search } from 'lucide-react-native';
+import { CheckCircle, Search, Trash2 } from 'lucide-react-native';
 import { useState } from 'react';
 import {
-  ActionSheetIOS,
-  Alert,
-  Platform,
+  ActivityIndicator,
+  RefreshControl,
   ScrollView,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,8 +22,45 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function NotificationScreen() {
   const [activeTab, setActiveTab] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const queryClient = useQueryClient();
 
-  const filteredNotifications = MOCK_NOTIFICATIONS.filter((noti) => {
+  const {
+    data: notifications = [],
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: async () => {
+      const response = await NotificationService.getMine();
+      return response.data;
+    },
+  });
+
+  const readAllMutation = useMutation({
+    mutationFn: NotificationService.readAll,
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+
+  const hideAllMutation = useMutation({
+    mutationFn: NotificationService.hideAll,
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+
+  const toggleReadMutation = useMutation({
+    mutationFn: (id: number) => NotificationService.toggleRead(id),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+
+  const hideMutation = useMutation({
+    mutationFn: (id: number) => NotificationService.hide(id),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+
+  const filteredNotifications = notifications.filter((noti: Notification) => {
     const matchesTab = activeTab === 'ALL' || noti.type === activeTab;
 
     const matchesSearch =
@@ -49,33 +88,16 @@ export default function NotificationScreen() {
   };
 
   const handlePressMenu = (notification: Notification) => {
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: ['Đóng', 'Đánh dấu đã đọc', 'Xóa'],
-          destructiveButtonIndex: 2,
-          cancelButtonIndex: 0,
-        },
-        (buttonIndex) => {
-          if (buttonIndex === 1) {
-            Alert.alert('Thành công', 'Đã đánh dấu là đã đọc');
-          } else if (buttonIndex === 2) {
-            Alert.alert('Xác nhận', 'Bạn có chắc muốn xóa thông báo này?');
-          }
-        }
-      );
-    } else {
-      Alert.alert('Tùy chọn', 'Chọn hành động', [
-        { text: 'Đánh dấu đã đọc' },
-        { text: 'Xóa', style: 'destructive' },
-        { text: 'Hủy', style: 'cancel' },
-      ]);
-    }
+    showNotificationActionsSheet({
+      notification,
+      onToggleRead: async () =>
+        await toggleReadMutation.mutateAsync(notification.id),
+      onHide: async () => await hideMutation.mutateAsync(notification.id),
+    });
   };
 
-  const handlePressFilter = () => {
-    Alert.alert('Bộ lọc', 'Chức năng đang phát triển');
-  };
+  const handleReadAll = () => readAllMutation.mutate();
+  const handleHideAll = () => hideAllMutation.mutate();
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
@@ -102,9 +124,34 @@ export default function NotificationScreen() {
         <NotificationTabs activeTab={activeTab} onChangeTab={setActiveTab} />
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <View className="flex-row justify-end px-5 mb-2">
+        <TouchableOpacity
+          onPress={handleReadAll}
+          className="flex-row items-center mr-4"
+        >
+          <CheckCircle size={16} color="#244B35" />
+          <Text className="ml-1 text-sm text-gray-700">Đọc tất cả</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleHideAll}
+          className="flex-row items-center"
+        >
+          <Trash2 size={16} color="#EF4444" />
+          <Text className="ml-1 text-sm text-red-500">Xóa tất cả</Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={isLoading} onRefresh={refetch} />
+        }
+      >
         <View className="px-5 pb-4">
-          {sortedNotifications.length === 0 ? (
+          {isLoading ? (
+            <ActivityIndicator className="mt-10" color="#244B35" />
+          ) : sortedNotifications.length === 0 ? (
             <View className="py-10 items-center">
               <Text className="text-gray-500">Không có thông báo nào</Text>
             </View>
