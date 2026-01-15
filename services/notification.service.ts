@@ -6,7 +6,6 @@ const URI = '/notifications';
 export const NotificationService = {
   getMine: async (): Promise<{ data: Notification[] }> => {
     const response = await api.get(`${URI}/mine`);
-    console.log(response);
     return response.data;
   },
 
