@@ -106,7 +106,7 @@ export default function MyDropdown({
         >
           <Text
             className={cn(
-              "text-base font-BeVietnamPro",
+              "text-base",
               value ? "text-[#244B35]" : "text-gray-400"
             )}
           >
@@ -148,7 +148,7 @@ export default function MyDropdown({
               onPress={() => handleSelect(item)}
               className="px-3 py-3 border-b border-gray-100"
             >
-              <Text className="text-base text-[#244B35] font-BeVietnamPro">
+              <Text className="text-base text-[#244B35]">
                 {item.label}
               </Text>
             </TouchableOpacity>

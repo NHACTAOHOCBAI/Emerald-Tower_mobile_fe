@@ -14,6 +14,7 @@ interface Props {
   isLoading?: boolean;
   disabled?: boolean;
   className?: string;
+  textClassName?: string;
   onPress?: () => void;
 }
 
@@ -35,6 +36,7 @@ export default function MyButton({
   isLoading,
   disabled,
   className,
+  textClassName,
   onPress,
 }: Props) {
   const pressed = useSharedValue(1);
@@ -74,7 +76,7 @@ export default function MyButton({
               <Text
                 className={cn(
                   textVariantStyles[variant],
-                  "font-BeVietnamProMedium"
+                  textClassName
                 )}
               >
                 {children}
