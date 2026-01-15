@@ -1,15 +1,29 @@
 import { ApartmentTab } from "@/components/information/ApartmentTab";
 import { ResidentTab } from "@/components/information/ResidentTab";
+import MyButton from "@/components/ui/Button";
 import { CustomHeader } from "@/components/ui/CustomHeader";
 import { MOCK_APARTMENT, MOCK_RESIDENT } from "@/constants/mockInformationData";
 import React, { useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function InformationScreen() {
+  const { logout } = useAuth();
   const [activeTab, setActiveTab] = useState<"resident" | "apartment">("resident");
   const [residentData] = useState(MOCK_RESIDENT);
   const [apartmentData] = useState(MOCK_APARTMENT);
+
+  const handleLogout = () => {
+    Alert.alert("Đăng xuất", "Bạn chắc chắn muốn đăng xuất?", [
+      { text: "Hủy", style: "cancel" },
+      {
+        text: "Đăng xuất",
+        style: "destructive",
+        onPress: () => void logout(),
+      },
+    ]);
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-[#F3F4F6]">
@@ -56,6 +70,16 @@ export default function InformationScreen() {
 
         <View style={{ display: activeTab === "apartment" ? "flex" : "none" }}>
           <ApartmentTab data={apartmentData} />
+        </View>
+
+        <View className="mt-6 pb-6">
+          <MyButton
+            onPress={handleLogout}
+            className="w-full py-3"
+            textClassName="text-white font-semibold"
+          >
+            Đăng xuất
+          </MyButton>
         </View>
       </ScrollView>
     </SafeAreaView>

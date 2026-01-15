@@ -2,17 +2,20 @@ import { CustomHeader } from "@/components/ui/CustomHeader";
 import BaseInput from "@/components/ui/BaseInput"; // đường dẫn đúng theo project bạn
 import { router } from "expo-router";
 import { useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Errors = { email?: string; password?: string };
 
 export default function LoginScreen() {
+  const { login, logout } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const [errors, setErrors] = useState<Errors>({});
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validate = () => {
     const next: Errors = {};
@@ -28,12 +31,26 @@ export default function LoginScreen() {
     return Object.keys(next).length === 0;
   };
 
-  const onSubmit = () => {
+  const onSubmit = async () => {
     setSubmitted(true);
     if (!validate()) return;
 
-    // TODO: cắm logic login sau
-    router.replace("/(tabs)/home");
+    try {
+      setIsSubmitting(true);
+      const profile = await login(email, password);
+      if (profile.role !== "RESIDENT") {
+        Alert.alert("Đăng nhập thất bại", " Sai tài khoản hoặc mật khẩu.");
+        await logout();
+        return;
+      }
+      router.replace("/(tabs)/home");
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || error?.message || "Đăng nhập thất bại";
+      Alert.alert("Đăng nhập thất bại", message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -102,9 +119,12 @@ export default function LoginScreen() {
           <TouchableOpacity
             onPress={onSubmit}
             activeOpacity={0.9}
-            className="bg-[#244B35] px-10 py-3 rounded-xl"
+            disabled={isSubmitting}
+            className="bg-[#244B35] px-10 py-3 rounded-xl disabled:opacity-60"
           >
-            <Text className="text-white font-semibold">Đăng nhập</Text>
+            <Text className="text-white font-semibold">
+              {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
