@@ -36,6 +36,7 @@ export const NOTI_TABS: NotiTab[] = [
   { key: NotiType.POLICY, label: 'Chính sách' },
   { key: NotiType.GENERAL, label: 'Thông báo chung' },
   { key: NotiType.WARNING, label: 'Cảnh báo' },
+  { key: NotiType.OTHER, label: 'Khác' },
 ];
 
 export function getNotiTypeLabel(type: NotiType): string {
