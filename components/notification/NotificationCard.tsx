@@ -1,4 +1,8 @@
-import { Notification, getNotiTypeColor } from '@/types/notification';
+import {
+  Notification,
+  getNotiTypeColor,
+  getNotiTypeLabel,
+} from '@/types/notification';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Download, MoreVertical } from 'lucide-react-native';
@@ -15,10 +19,13 @@ export default function NotificationCard({
   onPress,
   onPressMenu,
 }: NotificationCardProps) {
-  const timeAgo = formatDistanceToNow(new Date(notification.created_at), {
-    addSuffix: true,
-    locale: vi,
-  });
+  const timeAgo = formatDistanceToNow(
+    new Date(notification?.published_at || notification.created_at),
+    {
+      addSuffix: true,
+      locale: vi,
+    }
+  );
 
   const typeColor = getNotiTypeColor(notification.type);
 
@@ -81,7 +88,7 @@ export default function NotificationCard({
           style={{ backgroundColor: typeColor + '20' }}
         >
           <Text className="text-xs font-medium" style={{ color: typeColor }}>
-            {notification.type}
+            {getNotiTypeLabel(notification.type)}
           </Text>
         </View>
 

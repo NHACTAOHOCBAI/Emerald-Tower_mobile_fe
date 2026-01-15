@@ -41,6 +41,7 @@ const mapNotificationResponse = (raw: any): Notification => {
     type: raw.type as NotiType,
     is_urgent: raw.isUrgent,
     created_at: raw.createdAt,
+    published_at: raw.publishedAt,
     updated_at: raw.updatedAt,
     file_urls: raw.fileUrls || [],
     channels: raw.channels || [],

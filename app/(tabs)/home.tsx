@@ -1,4 +1,12 @@
-import { MOCK_NOTIFICATIONS } from '@/constants/mockNotificationData';
+import { NotificationService } from '@/services/notification.service';
+import {
+  getNotiTypeColor,
+  getNotiTypeLabel,
+  Notification,
+} from '@/types/notification';
+import { useQuery } from '@tanstack/react-query';
+import { formatDistanceToNow } from 'date-fns';
+import { vi } from 'date-fns/locale';
 import { router } from 'expo-router';
 import {
   Bell,
@@ -10,13 +18,14 @@ import {
   Wrench,
 } from 'lucide-react-native';
 import {
+  ActivityIndicator,
   Image,
-  SafeAreaView,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   // Mock user data
@@ -26,8 +35,25 @@ export default function HomeScreen() {
     hasUnreadNotifications: true,
   };
 
-  // Latest notifications (top 2)
-  const latestNotifications = MOCK_NOTIFICATIONS.slice(0, 2);
+  const { data: notifications = [], isLoading } = useQuery<Notification[]>({
+    queryKey: ['notifications-home'],
+    queryFn: async () => {
+      const response = await NotificationService.getMine();
+      return response.data;
+    },
+    select: (data) => {
+      return data
+        .sort(
+          (a, b) =>
+            new Date(b?.published_at || b.created_at).getTime() -
+            new Date(a?.published_at || a.created_at).getTime()
+        )
+        .slice(0, 2);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const unreadCount = notifications.filter((noti) => !noti.is_read).length;
 
   // Important items (mock data)
   const importantItems = [
@@ -97,7 +123,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="bg-[#244B35] pt-20 pb-8">
+      <View className="bg-[#244B35] pt-8 pb-8">
         <View className="px-5 flex-row items-center justify-between">
           <Text className="text-sm text-white/80">Emerald Tower</Text>
           <View className="flex-row gap-3">
@@ -109,7 +135,7 @@ export default function HomeScreen() {
               className="relative"
             >
               <Bell size={24} color="white" />
-              {user.hasUnreadNotifications && (
+              {unreadCount > 0 && (
                 <View className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
               )}
             </TouchableOpacity>
@@ -159,35 +185,52 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          {latestNotifications.map((noti) => (
-            <TouchableOpacity
-              key={noti.id}
-              onPress={() => handlePressNotification(noti.id)}
-              className="bg-white rounded-lg p-4 mb-3 shadow-sm"
-            >
-              <View className="flex-row items-start justify-between mb-2">
-                <Text className="text-base font-semibold text-gray-800 flex-1">
-                  {noti.title}
-                </Text>
-                <View className="bg-orange-100 px-2 py-1 rounded ml-2">
-                  <Text className="text-xs text-orange-700 font-medium">
-                    Bảo trì
-                  </Text>
-                </View>
-                {noti.is_urgent && (
-                  <View className="ml-2">
-                    <Text className="text-red-500 text-lg">ⓘ</Text>
+          {isLoading ? (
+            <ActivityIndicator color="#244B35" />
+          ) : notifications.length === 0 ? (
+            <Text className="text-gray-500">Không có thông báo mới</Text>
+          ) : (
+            notifications.map((noti) => {
+              const timeAgo = formatDistanceToNow(
+                new Date(noti?.published_at || noti.created_at),
+                {
+                  addSuffix: true,
+                  locale: vi,
+                }
+              );
+              const typeColor = getNotiTypeColor(noti.type);
+              return (
+                <TouchableOpacity
+                  key={noti.id}
+                  onPress={() => handlePressNotification(noti.id)}
+                  className="bg-white rounded-lg p-4 mb-3 shadow-sm"
+                >
+                  <View className="flex-row items-start justify-between mb-2">
+                    <Text className="text-base font-semibold text-gray-800 flex-1">
+                      {noti.title}
+                    </Text>
+                    <View
+                      className="px-2 py-1 rounded"
+                      style={{ backgroundColor: typeColor + '20' }}
+                    >
+                      <Text
+                        className="text-xs font-medium"
+                        style={{ color: typeColor }}
+                      >
+                        {getNotiTypeLabel(noti.type)}
+                      </Text>
+                    </View>
+                    {noti.is_urgent && (
+                      <View className="ml-2">
+                        <Text className="text-red-500 text-lg">ⓘ</Text>
+                      </View>
+                    )}
                   </View>
-                )}
-              </View>
-              <Text className="text-xs text-gray-500">
-                Từ: 10h30, ngày 20/11/2025
-              </Text>
-              <Text className="text-xs text-gray-500">
-                Đến: 22h10, ngày 20/11/2025
-              </Text>
-            </TouchableOpacity>
-          ))}
+                  <Text className="text-xs text-gray-500">{timeAgo}</Text>
+                </TouchableOpacity>
+              );
+            })
+          )}
         </View>
 
         {/* Important Items Section */}

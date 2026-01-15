@@ -70,7 +70,7 @@ export default function NotificationDetailScreen() {
   const typeLabel = getNotiTypeLabel(notification.type);
 
   const formattedDate = format(
-    new Date(notification.created_at),
+    new Date(notification?.published_at || notification.created_at),
     "HH:mm, 'ngày' dd/MM/yyyy",
     { locale: vi }
   );
