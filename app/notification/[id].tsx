@@ -1,11 +1,20 @@
+import { showNotificationActionsSheet } from '@/components/notification/NotificationActionSheet';
 import { CustomHeader } from '@/components/ui/CustomHeader';
-import { MOCK_NOTIFICATIONS } from '@/constants/mockNotificationData';
+import { NotificationService } from '@/services/notification.service';
 import { getNotiTypeColor, getNotiTypeLabel } from '@/types/notification';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { useLocalSearchParams } from 'expo-router';
-import { AlertCircle, Clock, Download, MapPin } from 'lucide-react-native';
+import { router, useLocalSearchParams } from 'expo-router';
 import {
+  AlertCircle,
+  Clock,
+  Download,
+  MapPin,
+  MoreVertical,
+} from 'lucide-react-native';
+import {
+  ActivityIndicator,
   Linking,
   ScrollView,
   Text,
@@ -16,8 +25,36 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function NotificationDetailScreen() {
   const { id } = useLocalSearchParams();
+  const queryClient = useQueryClient();
 
-  const notification = MOCK_NOTIFICATIONS.find((n) => n.id === Number(id));
+  const { data: notification, isLoading } = useQuery({
+    queryKey: ['notification', id],
+    queryFn: async () => {
+      const response = await NotificationService.getById(Number(id));
+      return response.data;
+    },
+    enabled: !!id,
+  });
+
+  const toggleReadMutation = useMutation({
+    mutationFn: () => NotificationService.toggleRead(Number(id)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notification', id] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+
+  const hideMutation = useMutation({
+    mutationFn: () => NotificationService.hide(Number(id)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      if (router.canGoBack()) {
+        router.back();
+      }
+    },
+  });
+
+  if (isLoading) return <ActivityIndicator className="flex-1" />;
 
   if (!notification) {
     return (
@@ -33,7 +70,7 @@ export default function NotificationDetailScreen() {
   const typeLabel = getNotiTypeLabel(notification.type);
 
   const formattedDate = format(
-    new Date(notification.created_at),
+    new Date(notification?.published_at || notification.created_at),
     "HH:mm, 'ngày' dd/MM/yyyy",
     { locale: vi }
   );
@@ -42,9 +79,24 @@ export default function NotificationDetailScreen() {
     Linking.openURL(url);
   };
 
+  const handlePressMenu = () => {
+    showNotificationActionsSheet({
+      notification,
+      onToggleRead: async () => await toggleReadMutation.mutateAsync(),
+      onHide: async () => await hideMutation.mutateAsync(),
+    });
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-      <CustomHeader title="Chi tiết" />
+      <CustomHeader
+        title="Chi tiết"
+        rightComponent={
+          <TouchableOpacity onPress={handlePressMenu} className="p-2">
+            <MoreVertical size={24} color="#244B35" />
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="px-5 py-4">
@@ -107,18 +159,23 @@ export default function NotificationDetailScreen() {
               <Text className="text-sm font-semibold text-gray-700 mb-3">
                 Tài liệu đính kèm
               </Text>
-              {notification.file_urls.map((url, index) => (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() => handleDownload(url)}
-                  className="flex-row items-center border border-gray-300 rounded-lg py-3 px-4 mb-2"
-                >
-                  <Download size={20} color="#374151" />
-                  <Text className="text-sm text-gray-700 ml-3 flex-1 font-medium">
-                    Quyết định s613.pdf
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              {notification.file_urls.map((url, index) => {
+                const fileName =
+                  url.split('/').pop()?.split('?')[0] ||
+                  `Tài liệu ${index + 1}`;
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => handleDownload(url)}
+                    className="flex-row items-center border border-gray-300 rounded-lg py-3 px-4 mb-2"
+                  >
+                    <Download size={20} color="#374151" />
+                    <Text className="text-sm text-gray-700 ml-3 flex-1 font-medium">
+                      {fileName}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           )}
 

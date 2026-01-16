@@ -1,4 +1,8 @@
-import { Notification, getNotiTypeColor } from '@/types/notification';
+import {
+  Notification,
+  getNotiTypeColor,
+  getNotiTypeLabel,
+} from '@/types/notification';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Download, MoreVertical } from 'lucide-react-native';
@@ -15,10 +19,13 @@ export default function NotificationCard({
   onPress,
   onPressMenu,
 }: NotificationCardProps) {
-  const timeAgo = formatDistanceToNow(new Date(notification.created_at), {
-    addSuffix: true,
-    locale: vi,
-  });
+  const timeAgo = formatDistanceToNow(
+    new Date(notification?.published_at || notification.created_at),
+    {
+      addSuffix: true,
+      locale: vi,
+    }
+  );
 
   const typeColor = getNotiTypeColor(notification.type);
 
@@ -81,7 +88,7 @@ export default function NotificationCard({
           style={{ backgroundColor: typeColor + '20' }}
         >
           <Text className="text-xs font-medium" style={{ color: typeColor }}>
-            {notification.type}
+            {getNotiTypeLabel(notification.type)}
           </Text>
         </View>
 
@@ -93,15 +100,27 @@ export default function NotificationCard({
       </View>
 
       {notification.file_urls.length > 0 && (
-        <TouchableOpacity
-          onPress={() => handleDownload(notification.file_urls[0])}
-          className="flex-row items-center justify-center border border-gray-300 rounded-lg py-2 px-4 mt-2"
-        >
-          <Download size={16} color="#374151" />
-          <Text className="text-sm text-gray-700 ml-2 font-medium">
-            Quyết định s613.pdf
+        <View className="bg-white rounded-lg p-4 mb-4">
+          <Text className="text-sm font-semibold text-gray-700 mb-3">
+            Tài liệu đính kèm
           </Text>
-        </TouchableOpacity>
+          {notification.file_urls.map((url, index) => {
+            const fileName =
+              url.split('/').pop()?.split('?')[0] || `Tài liệu ${index + 1}`;
+            return (
+              <TouchableOpacity
+                key={index}
+                onPress={() => handleDownload(url)}
+                className="flex-row items-center border border-gray-300 rounded-lg py-3 px-4 mb-2"
+              >
+                <Download size={20} color="#374151" />
+                <Text className="text-sm text-gray-700 ml-3 flex-1 font-medium">
+                  {fileName}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       )}
 
       {!notification.is_read && (
