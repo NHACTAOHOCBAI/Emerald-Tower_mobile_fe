@@ -37,6 +37,13 @@
           }
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Ứng dụng cần truy cập thư viện ảnh để bạn chọn ảnh minh chứng.",
+          "cameraPermission": "Ứng dụng cần truy cập camera để bạn chụp ảnh minh chứng."
+        }
+      ],
       "expo-font",
       "@react-native-community/datetimepicker"
     ],

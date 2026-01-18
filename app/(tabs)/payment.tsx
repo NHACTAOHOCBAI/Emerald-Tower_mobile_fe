@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { BarChart3, Plus } from "lucide-react-native";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -17,9 +17,15 @@ const parseDate = (dateStr: string) => {
 export default function PaymentScreen() {
   const router = useRouter();
 
+  // check ngày nhập chỉ số
+  const today = new Date();
+  const currentDay = today.getDate();
+  // const isInputPeriod = currentDay >= 20 && currentDay <= 25;
+  const isInputPeriod = true;
+
   const { totalDebt, invoiceCount, nearestDueDate } = useMemo(() => {
     const activeInvoices = MOCK_HISTORY.filter(
-      (item) => item.status === "unpaid" || item.status === "overdue"
+      (item) => item.status === "unpaid" || item.status === "overdue",
     );
 
     const total = activeInvoices.reduce((sum, item) => sum + item.amount, 0);
@@ -28,7 +34,7 @@ export default function PaymentScreen() {
     let nearest = null;
     if (activeInvoices.length > 0) {
       const sortedByDate = [...activeInvoices].sort(
-        (a, b) => parseDate(a.dueDate).getTime() - parseDate(b.dueDate).getTime()
+        (a, b) => parseDate(a.dueDate).getTime() - parseDate(b.dueDate).getTime(),
       );
       nearest = sortedByDate[0].dueDate;
     }
@@ -70,22 +76,59 @@ export default function PaymentScreen() {
           </MyButton>
         </View>
 
-        <View className="flex-row gap-4 mb-6">
-          <TouchableOpacity className="flex-1 bg-transparent p-3 rounded-xl border border-gray-400 flex-row items-center justify-center">
-            <Plus size={20} color="#244B35" />
-            <Text className="ml-2 font-semibold text-gray-800">Nhập chỉ số</Text>
+        <View className="flex-row gap-4 mb-2">
+          <TouchableOpacity
+            disabled={!isInputPeriod}
+            onPress={() => {
+              router.push("/payment/input-meter");
+            }}
+            className={`flex-1 p-3 rounded-xl border flex-row items-center justify-center ${
+              isInputPeriod
+                ? "bg-transparent border-gray-400"
+                : "bg-gray-100 border-gray-200 opacity-50"
+            }`}
+          >
+            <Plus size={20} color={isInputPeriod ? "#244B35" : "#9CA3AF"} />
+            <Text
+              className={`ml-2 font-semibold ${
+                isInputPeriod ? "text-gray-800" : "text-gray-400"
+              }`}
+            >
+              Nhập chỉ số
+            </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity className="flex-1 bg-transparent p-3 rounded-xl border border-gray-400 flex-row items-center justify-center">
+          <TouchableOpacity
+            className="flex-1 bg-transparent p-3 rounded-xl border border-gray-400 flex-row items-center justify-center"
+            onPress={() => {
+              router.push("/payment/statistics");
+            }}
+          >
             <BarChart3 size={20} color="#E09B6B" />
             <Text className="ml-2 font-semibold text-gray-800">Thống kê</Text>
           </TouchableOpacity>
         </View>
 
+        {!isInputPeriod && (
+          <Text className="text-[10px] text-gray-400 italic text-center mb-4">
+            *Nhập chỉ số mở từ ngày 20 - 25 hàng tháng
+          </Text>
+        )}
+        {isInputPeriod && <View className="mb-3" />}
+
         <Text className="text-lg font-bold text-main mb-3">Lịch sử hóa đơn</Text>
         <View className="pb-10">
           {MOCK_HISTORY.map((item) => (
-            <InvoiceHistoryItem key={item.id} item={item} />
+            <InvoiceHistoryItem
+              key={item.id}
+              item={item}
+              onPress={() =>
+                router.push({
+                  pathname: "/payment/detail/[id]",
+                  params: { id: item.id },
+                })
+              }
+            />
           ))}
         </View>
       </ScrollView>

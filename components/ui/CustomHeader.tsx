@@ -73,7 +73,7 @@ export const CustomHeader = ({
         </View>
       </View>
 
-      {children && <View className="mt-4">{children}</View>}
+      {children && <View className="mt-2.5">{children}</View>}
     </View>
   );
 };
