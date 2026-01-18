@@ -1,7 +1,8 @@
-import { useRouter } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
-import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { useIsFetching, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
+import { ChevronLeft, RefreshCw } from "lucide-react-native";
+import React from "react";
+import { Text, TouchableOpacity, View } from "react-native";
 
 interface CustomHeaderProps {
   title: string;
@@ -9,9 +10,9 @@ interface CustomHeaderProps {
   rightComponent?: React.ReactNode;
   children?: React.ReactNode;
   onBackPress?: () => void;
-  backgroundColor?: string; // Có thể truyền 'bg-white' hoặc '#C89F6C'
-  textColor?: string; // Có thể truyền 'text-white' hoặc '#000000'
-  iconColor?: string; // Mã màu Hex cho icon
+  backgroundColor?: string;
+  textColor?: string;
+  iconColor?: string;
   showBorder?: boolean;
 }
 
@@ -21,12 +22,14 @@ export const CustomHeader = ({
   rightComponent,
   children,
   onBackPress,
-  backgroundColor = 'white',
-  textColor = '#1F2937',
-  iconColor = '#1F2937',
+  backgroundColor = "white",
+  textColor = "#1F2937",
+  iconColor = "#1F2937",
   showBorder = true,
 }: CustomHeaderProps) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const isFetching = useIsFetching() > 0;
 
   const handleBack = () => {
     if (onBackPress) {
@@ -41,13 +44,20 @@ export const CustomHeader = ({
     }
   };
 
+  const handleRefresh = async () => {
+    if (isFetching) return;
+    await queryClient.refetchQueries();
+  };
+
   const isHexColor = backgroundColor.startsWith("#");
   const isTextHex = textColor.startsWith("#");
 
   return (
     <View
       style={isHexColor ? { backgroundColor } : {}}
-      className={`px-5 py-4 ${!isHexColor ? backgroundColor : ''} ${showBorder ? 'border-b border-gray-100' : ''}`}
+      className={`px-5 py-4 ${!isHexColor ? backgroundColor : ""} ${
+        showBorder ? "border-b border-gray-100" : ""
+      }`}
     >
       <View className="flex-row items-center justify-between min-h-[40px]">
         <View className="w-10">
@@ -62,14 +72,33 @@ export const CustomHeader = ({
           <Text
             numberOfLines={1}
             style={isTextHex ? { color: textColor } : {}}
-            className={`text-[24px] font-normal text-center ${!isTextHex ? textColor : ''}`}
+            className={`text-[24px] font-normal text-center ${
+              !isTextHex ? textColor : ""
+            }`}
           >
             {title}
           </Text>
         </View>
 
         <View className="w-10 items-end">
-          {rightComponent ? rightComponent : <View className="w-6" />}
+          {rightComponent ? (
+            rightComponent
+          ) : (
+            <TouchableOpacity
+              onPress={handleRefresh}
+              disabled={isFetching}
+              className="p-1"
+            >
+              <RefreshCw
+                size={20}
+                color={iconColor}
+                style={{
+                  opacity: isFetching ? 0.5 : 1,
+                  transform: [{ rotate: isFetching ? "360deg" : "0deg" }],
+                }}
+              />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 

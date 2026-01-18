@@ -11,10 +11,10 @@ import { View } from 'react-native';
 
 const TAB_ITEMS = [
   { name: 'home', icon: Home },
-  { name: 'information', icon: CircleUserRound },
   { name: 'service', icon: ConciergeBell },
   { name: 'voting', icon: Vote },
   { name: 'payment', icon: CreditCard },
+  { name: 'information', icon: CircleUserRound },
 ];
 
 export default function TabsLayout() {
