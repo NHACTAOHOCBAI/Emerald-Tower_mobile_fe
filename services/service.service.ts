@@ -1,4 +1,9 @@
-import { Booking, Service, SlotAvailability } from '@/types/service';
+import {
+  Booking,
+  BookingStatus,
+  Service,
+  SlotAvailability,
+} from '@/types/service';
 import { api } from './api';
 
 const URI = '/services';
@@ -41,6 +46,13 @@ export const ServiceService = {
     const response = await api.post(`${URI}/slot/${id}/reserve`, body);
     return {
       data: response.data.data,
+    };
+  },
+
+  getMyBookings: async (): Promise<{ data: Booking[] }> => {
+    const response = await api.get(`${BOOKING_URI}/mine`);
+    return {
+      data: response.data.data.map(mapBookingData),
     };
   },
 
@@ -91,5 +103,27 @@ const mapSlot = (service_id: number, raw: any): SlotAvailability => {
     start_time: formatTime(raw.startTime),
     end_time: formatTime(raw.endTime),
     remaining_slot: raw.remainingSlot,
+  };
+};
+
+const mapBookingData = (raw: any): Booking => {
+  return {
+    id: raw.id,
+    code: raw.code,
+    customer_id: raw.resident.id,
+    customer_name: raw.resident.fullName,
+    customer_phone: raw.resident.phoneNumber,
+    service_id: raw.service.id,
+    service_name: raw.service.name,
+    date: raw.bookingDate,
+    timestamps: raw.timestamps.map((t: any) => ({
+      startTime: t.startTime,
+      endTime: t.endTime,
+    })),
+    unit_price: raw.unitPrice,
+    total: raw.totalPrice,
+    created_at: raw.createdAt,
+    status: raw.status as BookingStatus,
+    expiresAt: raw.expiresAt,
   };
 };

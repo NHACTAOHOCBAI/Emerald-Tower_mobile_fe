@@ -2,7 +2,7 @@ import MyButton from '@/components/ui/Button';
 import { CustomHeader } from '@/components/ui/CustomHeader';
 import { ServiceService } from '@/services/service.service';
 import { PaymentMethod } from '@/types/service';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { differenceInSeconds, format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -19,6 +19,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function PaymentScreen() {
+  const queryClient = useQueryClient();
   const { id, bookingData } = useLocalSearchParams();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(
     null
@@ -48,6 +49,12 @@ export default function PaymentScreen() {
           method: selectedMethod,
         },
       } as any);
+      queryClient.invalidateQueries({ queryKey: ['bookings', 'mine'] });
+      queryClient.invalidateQueries({ queryKey: ['booking', id] });
+      const dateString = result.bookingDate;
+      queryClient.invalidateQueries({
+        queryKey: ['slots', id, dateString],
+      });
     },
     onError: (error: any) => {
       Alert.alert(
