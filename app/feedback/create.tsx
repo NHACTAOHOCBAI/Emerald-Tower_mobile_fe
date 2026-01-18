@@ -1,13 +1,16 @@
 import CategorySelector from '@/components/feedback/CategorySelector';
 import { CustomHeader } from '@/components/ui/CustomHeader';
-import { IssueType } from '@/types/feedback';
+import { FeedbackService } from '@/services/feedback.service';
+import { Block, IssueType } from '@/types/feedback';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { ChevronDown, Image as ImageIcon, X } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
+  FlatList,
   Image,
+  Modal,
   ScrollView,
   Text,
   TextInput,
@@ -20,11 +23,18 @@ export default function CreateFeedbackScreen() {
   const [selectedType, setSelectedType] = useState<IssueType | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [building, setBuilding] = useState('Tòa A');
-  const [floor, setFloor] = useState('Tầng 3');
-  const [room, setRoom] = useState('Phòng 301');
   const [images, setImages] = useState<string[]>([]);
+  const [blocks, setBlocks] = useState<Block[]>([]);
+  const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
+  const [selectedFloor, setSelectedFloor] = useState<number | null>(null);
   const [detailDescription, setDetailDescription] = useState('');
+
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [showFloorModal, setShowFloorModal] = useState(false);
+
+  useEffect(() => {
+    FeedbackService.getBlocks().then(setBlocks);
+  }, []);
 
   const handlePickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -42,7 +52,7 @@ export default function CreateFeedbackScreen() {
 
     if (!result.canceled) {
       const newImages = result.assets.map((asset) => asset.uri);
-      setImages([...images, ...newImages].slice(0, 5)); // Max 5 images
+      setImages([...images, ...newImages].slice(0, 5));
     }
   };
 
@@ -50,26 +60,54 @@ export default function CreateFeedbackScreen() {
     setImages(images.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = () => {
-    if (!selectedType) {
-      Alert.alert('Thông báo', 'Vui lòng chọn loại sự cố');
-      return;
-    }
-    if (!title.trim()) {
-      Alert.alert('Thông báo', 'Vui lòng nhập tiêu đề');
-      return;
-    }
-    if (!description.trim()) {
-      Alert.alert('Thông báo', 'Vui lòng nhập mô tả');
+  const handleSubmit = async () => {
+    if (
+      !selectedType ||
+      !title.trim() ||
+      !description.trim() ||
+      images.length === 0
+    ) {
+      Alert.alert('Lỗi', 'Vui lòng điền đầy đủ thông tin bắt buộc');
       return;
     }
 
-    Alert.alert('Thành công', 'Đã gửi phản ánh thành công!', [
-      {
-        text: 'OK',
-        onPress: () => router.back(),
-      },
-    ]);
+    try {
+      await FeedbackService.create(
+        {
+          type: selectedType,
+          title,
+          description,
+          blockId: selectedBlock?.id,
+          floor: selectedFloor,
+          detailLocation: detailDescription,
+        },
+        images
+      );
+
+      Alert.alert('Thành công', 'Đã gửi phản ánh thành công!', [
+        { text: 'OK', onPress: () => router.replace('/feedback') },
+      ]);
+    } catch (error: any) {
+      Alert.alert(
+        'Lỗi',
+        error.data.data.message || 'Không thể gửi phản ánh, vui lòng thử lại'
+      );
+    }
+  };
+
+  const floors = selectedBlock
+    ? Array.from({ length: selectedBlock.totalFloors }, (_, i) => i + 1)
+    : [];
+
+  const selectBlock = (block: Block) => {
+    setSelectedBlock(block);
+    setSelectedFloor(null);
+    setShowBlockModal(false);
+  };
+
+  const selectFloor = (floor: number) => {
+    setSelectedFloor(floor);
+    setShowFloorModal(false);
   };
 
   return (
@@ -106,22 +144,29 @@ export default function CreateFeedbackScreen() {
               Vị trí sự cố <Text className="text-red-500">*</Text>
             </Text>
             <View className="flex-row gap-2">
-              <TouchableOpacity className="flex-1 bg-white border border-gray-200 rounded-lg px-4 py-3 flex-row items-center justify-between">
-                <Text className="text-gray-800">{building}</Text>
+              <TouchableOpacity
+                onPress={() => setShowBlockModal(true)}
+                className="flex-1 bg-white border border-gray-200 rounded-lg px-4 py-3 flex-row items-center justify-between"
+              >
+                <Text className="text-gray-800">
+                  {selectedBlock ? selectedBlock.name : 'Chọn tòa'}
+                </Text>
                 <ChevronDown size={20} color="#6B7280" />
               </TouchableOpacity>
 
-              <TouchableOpacity className="flex-1 bg-white border border-gray-200 rounded-lg px-4 py-3 flex-row items-center justify-between">
-                <Text className="text-gray-800">{floor}</Text>
+              <TouchableOpacity
+                onPress={() => selectedBlock && setShowFloorModal(true)}
+                disabled={!selectedBlock}
+                className="flex-1 bg-white border border-gray-200 rounded-lg px-4 py-3 flex-row items-center justify-between"
+              >
+                <Text className="text-gray-800">
+                  {selectedFloor ? `Tầng ${selectedFloor}` : 'Chọn tầng'}
+                </Text>
                 <ChevronDown size={20} color="#6B7280" />
               </TouchableOpacity>
             </View>
-            <TouchableOpacity className="mt-2 bg-white border border-gray-200 rounded-lg px-4 py-3 flex-row items-center justify-between">
-              <Text className="text-gray-800">{room}</Text>
-              <ChevronDown size={20} color="#6B7280" />
-            </TouchableOpacity>
             <TextInput
-              placeholder="Chi tiết khác"
+              placeholder="Chi tiết khác (ví dụ: gần phòng 301, gần thang máy)"
               value={detailDescription}
               onChangeText={setDetailDescription}
               multiline
@@ -150,7 +195,7 @@ export default function CreateFeedbackScreen() {
 
           <View className="mb-4">
             <Text className="text-sm font-semibold text-gray-700 mb-2">
-              Ảnh/video đính kèm (Tối đa 5 ảnh){' '}
+              Ảnh/video đính kèm (Tối đa 5){' '}
               <Text className="text-red-500">*</Text>
             </Text>
             <View className="flex-row flex-wrap gap-2">
@@ -191,6 +236,58 @@ export default function CreateFeedbackScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <Modal visible={showBlockModal} animationType="slide" transparent>
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="bg-white p-4 rounded-t-xl">
+            <Text className="text-lg font-bold mb-4">Chọn tòa</Text>
+            <FlatList
+              data={blocks}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => selectBlock(item)}
+                  className="py-3 border-b border-gray-200"
+                >
+                  <Text className="text-gray-800">{item.name}</Text>{' '}
+                </TouchableOpacity>
+              )}
+            />
+            <TouchableOpacity
+              onPress={() => setShowBlockModal(false)}
+              className="mt-4"
+            >
+              <Text className="text-center text-red-500">Đóng</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={showFloorModal} animationType="slide" transparent>
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="bg-white p-4 rounded-t-xl">
+            <Text className="text-lg font-bold mb-4">Chọn tầng</Text>
+            <FlatList
+              data={floors}
+              keyExtractor={(item) => item.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => selectFloor(item)}
+                  className="py-3 border-b border-gray-200"
+                >
+                  <Text className="text-gray-800">Tầng {item}</Text>
+                </TouchableOpacity>
+              )}
+            />
+            <TouchableOpacity
+              onPress={() => setShowFloorModal(false)}
+              className="mt-4"
+            >
+              <Text className="text-center text-red-500">Đóng</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

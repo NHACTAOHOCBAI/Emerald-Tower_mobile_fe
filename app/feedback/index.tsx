@@ -1,11 +1,18 @@
 import FeedbackCard from '@/components/feedback/FeedbackCard';
 import { CustomHeader } from '@/components/ui/CustomHeader';
-import { MOCK_FEEDBACKS } from '@/constants/mockFeedbackData';
+import { FeedbackService } from '@/services/feedback.service';
 import { FeedbackStatus } from '@/types/feedback';
+import { useQuery } from '@tanstack/react-query';
 import { Href, router } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { useState } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import {
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type TabKey = 'all' | 'in_progress' | 'resolved';
@@ -27,26 +34,37 @@ const TABS: Tab[] = [
     label: 'Đang xử lý',
     filter: (f) =>
       f.status === FeedbackStatus.PENDING ||
-      f.status === FeedbackStatus.IN_PROGRESS,
+      f.status === FeedbackStatus.RECEIVED ||
+      f.status === FeedbackStatus.PROCESSING,
   },
   {
     key: 'resolved',
-    label: 'Đã xong',
-    filter: (f) => f.status === FeedbackStatus.RESOLVED,
+    label: 'Đã đóng',
+    filter: (f) =>
+      f.status === FeedbackStatus.RESOLVED ||
+      f.status === FeedbackStatus.REJECTED,
   },
 ];
 
 export default function FeedbackScreen() {
   const [activeTab, setActiveTab] = useState<TabKey>('all');
 
+  const {
+    data: feedbacks = [],
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ['my-feedbacks'],
+    queryFn: FeedbackService.getMine,
+  });
+
   const currentTab = TABS.find((t) => t.key === activeTab);
-  const filteredFeedbacks = MOCK_FEEDBACKS.filter(
+  const filteredFeedbacks = feedbacks.filter(
     currentTab?.filter || (() => true)
   );
 
   const sortedFeedbacks = [...filteredFeedbacks].sort(
-    (a, b) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
   const handlePressFeedback = (feedbackId: number) => {
@@ -67,7 +85,7 @@ export default function FeedbackScreen() {
       <View className="flex-row gap-2 px-5 py-4">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.key;
-          const count = MOCK_FEEDBACKS.filter(tab.filter).length;
+          const count = feedbacks.filter(tab.filter).length;
 
           return (
             <TouchableOpacity
@@ -93,8 +111,11 @@ export default function FeedbackScreen() {
         className="flex-1"
         showsVerticalScrollIndicator={false}
         contentContainerClassName="p-5"
+        refreshControl={
+          <RefreshControl refreshing={isLoading} onRefresh={refetch} />
+        }
       >
-        {sortedFeedbacks.length === 0 ? (
+        {!isLoading && sortedFeedbacks.length === 0 ? (
           <View className="py-20 items-center">
             <Text className="text-gray-500 text-center">
               Chưa có phản ánh nào
