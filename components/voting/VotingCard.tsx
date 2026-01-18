@@ -13,8 +13,14 @@ export default function VotingCard({
   onPressVote,
   onPressResult,
 }: VotingCardProps) {
-  const startDate = format(new Date(voting.start_time), 'dd/MM/yyyy - HH:mm');
-  const endDate = format(new Date(voting.end_time), 'dd/MM/yyyy - HH:mm');
+  const safeFormat = (dateStr: string | undefined, formatStr: string) => {
+    if (!dateStr) return 'N/A';
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? 'N/A' : format(date, formatStr);
+  };
+
+  const startDate = safeFormat(voting.start_time, 'dd/MM/yyyy - HH:mm');
+  const endDate = safeFormat(voting.end_time, 'dd/MM/yyyy - HH:mm');
 
   const getRemainingDays = () => {
     const diff = differenceInDays(new Date(voting.end_time), new Date());
@@ -23,12 +29,12 @@ export default function VotingCard({
 
   const getStatusBadge = () => {
     const statusConfig = {
-      ongoing: { text: getRemainingDays(), bg: 'bg-orange-500' },
-      upcoming: { text: 'Sắp diễn ra', bg: 'bg-amber-400' },
-      closed: { text: 'Đã đóng', bg: 'bg-red-500' },
+      ONGOING: { text: getRemainingDays(), bg: 'bg-orange-500' },
+      UPCOMING: { text: 'Sắp diễn ra', bg: 'bg-amber-400' },
+      CLOSED: { text: 'Đã đóng', bg: 'bg-red-500' },
     };
 
-    const config = statusConfig[voting.status || 'ongoing'];
+    const config = statusConfig[voting.status || 'ONGOING'];
 
     return (
       <View className={`${config.bg} px-3 py-1 rounded-md`}>
@@ -40,7 +46,7 @@ export default function VotingCard({
   const renderActionButton = () => {
     const status = voting.status;
 
-    if (status === 'closed') {
+    if (status === 'CLOSED') {
       return (
         <TouchableOpacity
           className="bg-[#244B35] px-6 py-2 rounded-lg"
@@ -51,7 +57,7 @@ export default function VotingCard({
       );
     }
 
-    const isUpcoming = status === 'upcoming';
+    const isUpcoming = status === 'UPCOMING';
     return (
       <TouchableOpacity
         className={`px-6 py-2 rounded-lg ${isUpcoming ? 'bg-gray-300' : 'bg-[#244B35]'}`}
@@ -66,9 +72,18 @@ export default function VotingCard({
   return (
     <View className="bg-white rounded-lg p-4 mb-3 shadow-sm border border-gray-100">
       <View className="flex-row justify-between items-center mb-3">
-        <Text className="text-gray-500 text-xs">
-          {format(new Date(voting.created_at), 'dd/MM/yyyy')}
-        </Text>
+        <View className="flex-row items-center mb-2 flex-wrap gap-2">
+          <Text className="text-gray-500 text-xs">
+            {safeFormat(voting?.created_at, 'dd/MM/yyyy')}
+          </Text>
+          {voting.is_required && (
+            <View className="flex-row items-center">
+              <View className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1" />
+              <Text className="text-xs font-bold text-red-500"> BẮT BUỘC</Text>
+            </View>
+          )}
+        </View>
+
         {getStatusBadge()}
       </View>
 
@@ -77,6 +92,15 @@ export default function VotingCard({
       </Text>
 
       <Text className="text-sm text-gray-600 mb-3">{voting.content}</Text>
+
+      {voting.voted_option && (
+        <Text className="text-sm text-green-700 bg-green-50 px-3 py-2 rounded-lg mb-2">
+          Bạn đã chọn:{' '}
+          <Text className="font-medium text-green-800">
+            {voting.voted_option.name}
+          </Text>
+        </Text>
+      )}
 
       <View className="bg-gray-50 p-3 rounded-md mb-3">
         <Text className="text-xs font-semibold text-gray-700 mb-1">

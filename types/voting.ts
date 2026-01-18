@@ -1,4 +1,4 @@
-export type VotingStatus = 'ongoing' | 'upcoming' | 'closed';
+export type VotingStatus = 'ONGOING' | 'UPCOMING' | 'CLOSED';
 
 export interface TargetBlock {
   id: number;
@@ -13,35 +13,34 @@ export interface Voting {
   start_time: string;
   end_time: string;
   created_at: string;
-  updated_at: string;
   file_urls: string[];
   target_blocks: TargetBlock[];
   options: Option[];
   status?: VotingStatus;
+  voted_option?: ResidentOption;
 }
 
 export interface Option {
   id: number;
-  voting_id: number;
   name: string;
-  description: string;
+  description?: string;
   vote_count?: number;
 }
 
 export interface ResidentOption {
   id: number;
-  resident_id: number;
-  option_id: number;
-  created_at: string;
+  name: string;
 }
 
 export interface VoteResult {
   voting_id: number;
-  total_votes: number;
+  voted_area: number;
+  total: number;
   options: {
     id: number;
     name: string;
     vote_count: number;
+    total_area: number;
     percentage: number;
   }[];
 }

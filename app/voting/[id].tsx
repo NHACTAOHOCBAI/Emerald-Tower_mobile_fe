@@ -1,16 +1,64 @@
+import MyButton from '@/components/ui/Button';
 import { CustomHeader } from '@/components/ui/CustomHeader';
-import { MOCK_VOTINGS_WITH_STATUS } from '@/constants/mockVotingData';
+import { VotingService } from '@/services/voting.service';
 import { Option } from '@/types/voting';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function VotingDetailScreen() {
+  const queryClient = useQueryClient();
   const { id } = useLocalSearchParams();
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
 
-  const voting = MOCK_VOTINGS_WITH_STATUS.find((v) => v.id === Number(id));
+  const { data: voting, isLoading } = useQuery({
+    queryKey: ['voting', id],
+    queryFn: async () => {
+      const response = await VotingService.getById(Number(id));
+      return response.data;
+    },
+    enabled: !!id,
+  });
+
+  const voteMutation = useMutation({
+    mutationFn: (optionId: number) => VotingService.vote(Number(id), optionId),
+    onSuccess: () => {
+      Alert.alert('Thành công', 'Bạn đã biểu quyết thành công!', [
+        {
+          text: 'Xem kết quả',
+          onPress: () => {
+            router.replace({
+              pathname: '/voting/result/[id]',
+              params: { id: Number(id) },
+            });
+          },
+        },
+        {
+          text: 'OK',
+          onPress: () => router.back(),
+        },
+      ]);
+
+      queryClient.invalidateQueries({ queryKey: ['votings'] });
+    },
+    onError: (error: any) => {
+      const errorMsg =
+        error?.response?.data?.message ||
+        'Có lỗi xảy ra khi biểu quyết, thử lại sau';
+      Alert.alert('Lỗi', errorMsg);
+    },
+  });
+
+  if (isLoading) return <ActivityIndicator className="flex-1" />;
 
   if (!voting) {
     return (
@@ -28,21 +76,7 @@ export default function VotingDetailScreen() {
       return;
     }
 
-    Alert.alert('Thành công', 'Bạn đã biểu quyết thành công!', [
-      {
-        text: 'Xem kết quả',
-        onPress: () => {
-          router.replace({
-            pathname: '/voting/result/[id]',
-            params: { id: voting.id },
-          });
-        },
-      },
-      {
-        text: 'OK',
-        onPress: () => router.back(),
-      },
-    ]);
+    voteMutation.mutate(Number(selectedOptionId));
   };
 
   return (
@@ -66,15 +100,15 @@ export default function VotingDetailScreen() {
         </View>
       </ScrollView>
 
-      <View className="bg-white px-5 py-4 border-t border-gray-100 mb-16">
-        <TouchableOpacity
-          className="bg-[#244B35] py-4 rounded-lg"
+      <View className="bg-white px-5 py-4 border-t border-gray-100">
+        <MyButton
+          className="w-full bg-[#E09B6B] py-4 rounded-lg"
+          textClassName="font-bold text-base uppercase"
           onPress={handleSubmitVote}
+          isLoading={voteMutation.isPending}
         >
-          <Text className="text-white text-center font-semibold text-base">
-            Xác nhận
-          </Text>
-        </TouchableOpacity>
+          XÁC NHẬN
+        </MyButton>
       </View>
     </SafeAreaView>
   );
