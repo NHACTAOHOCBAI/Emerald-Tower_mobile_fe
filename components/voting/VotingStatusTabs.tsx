@@ -5,16 +5,16 @@ interface StatusTabsProps {
   activeStatus: VotingStatus;
   onChangeStatus: (status: VotingStatus) => void;
   counts?: {
-    ongoing: number;
-    upcoming: number;
-    closed: number;
+    ONGOING: number;
+    UPCOMING: number;
+    CLOSED: number;
   };
 }
 
 const TABS = [
-  { key: 'ongoing' as VotingStatus, label: 'Đang diễn ra' },
-  { key: 'upcoming' as VotingStatus, label: 'Sắp diễn ra' },
-  { key: 'closed' as VotingStatus, label: 'Đã đóng' },
+  { key: 'ONGOING' as VotingStatus, label: 'Đang diễn ra' },
+  { key: 'UPCOMING' as VotingStatus, label: 'Sắp diễn ra' },
+  { key: 'CLOSED' as VotingStatus, label: 'Đã đóng' },
 ];
 
 export default function StatusTabs({

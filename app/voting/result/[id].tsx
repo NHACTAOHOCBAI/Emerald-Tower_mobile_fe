@@ -1,7 +1,14 @@
 import { CustomHeader } from '@/components/ui/CustomHeader';
-import { MOCK_VOTINGS_WITH_STATUS } from '@/constants/mockVotingData';
+import { VotingService } from '@/services/voting.service';
+import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
-import { Dimensions, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Dimensions,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -16,9 +23,18 @@ const CHART_COLORS = [
 export default function VotingResultScreen() {
   const { id } = useLocalSearchParams();
 
-  const voting = MOCK_VOTINGS_WITH_STATUS.find((v) => v.id === Number(id));
+  const { data: result, isLoading } = useQuery({
+    queryKey: ['result', id],
+    queryFn: async () => {
+      const response = await VotingService.getStatistics(Number(id));
+      return response.data;
+    },
+    enabled: !!id,
+  });
 
-  if (!voting) {
+  if (isLoading) return <ActivityIndicator className="flex-1" />;
+
+  if (!result) {
     return (
       <SafeAreaView className="flex-1 bg-white">
         <View className="flex-1 justify-center items-center">
@@ -28,26 +44,26 @@ export default function VotingResultScreen() {
     );
   }
 
-  const totalVotes = voting.options.reduce(
-    (sum, opt) => sum + (opt.vote_count || 0),
+  const totalVotes = result.options.reduce(
+    (sum: number, opt: any) => sum + (opt.vote_count || 0),
     0
   );
 
-  const chartData = voting.options.map((option, index) => ({
+  const chartData = result.options.map((option: any, index: number) => ({
     name: option.name.replace('Phương án ', 'PA '),
-    population: option.vote_count || 0,
+    population: option.total_area || 0,
     color: CHART_COLORS[index % CHART_COLORS.length],
     legendFontColor: '#374151',
     legendFontSize: 12,
   }));
 
-  const getPercentage = (voteCount: number) => {
-    if (totalVotes === 0) return 0;
-    return ((voteCount / totalVotes) * 100).toFixed(1);
+  const getPercentage = (voted_area: number) => {
+    if (result.total === 0) return 0;
+    return ((voted_area / result.total) * 100).toFixed(2);
   };
 
-  const winningOption = voting.options.reduce((prev, current) =>
-    (prev.vote_count || 0) > (current.vote_count || 0) ? prev : current
+  const winningOption = result.options.reduce((prev: any, current: any) =>
+    (prev.total_area || 0) > (current.total_area || 0) ? prev : current
   );
 
   return (
@@ -56,7 +72,7 @@ export default function VotingResultScreen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="px-5 py-4">
           <Text className="text-lg font-bold text-gray-800 mb-8 text-center">
-            {voting.title}
+            {result.title}
           </Text>
 
           <View className="bg-white rounded-lg p-4 mb-4 items-center">
@@ -65,6 +81,16 @@ export default function VotingResultScreen() {
             </Text>
             <Text className="text-3xl font-bold text-[#244B35]">
               {totalVotes}
+            </Text>
+            <Text className="text-xs text-gray-500 mt-1">lượt bỏ phiếu</Text>
+          </View>
+
+          <View className="bg-white rounded-lg p-4 mb-4 items-center">
+            <Text className="text-sm text-gray-600 mb-1">
+              Tổng số m2 bỏ phiếu
+            </Text>
+            <Text className="text-3xl font-bold text-[#244B35]">
+              {result.voted_area}
             </Text>
             <Text className="text-xs text-gray-500 mt-1">lượt bỏ phiếu</Text>
           </View>
@@ -87,8 +113,10 @@ export default function VotingResultScreen() {
           )}
 
           <View className="bg-white rounded-lg p-4 mb-4">
-            {voting.options.map((option, index) => {
-              const percentage = getPercentage(option.vote_count || 0);
+            {result.options.map((option: any, index: number) => {
+              const percentage = getPercentage(
+                option.percentage || option.total_area || 0
+              );
               const isWinner = option.id === winningOption.id && totalVotes > 0;
               const progressWidth =
                 `${Math.min(Number(percentage), 100)}%` as const;
@@ -97,7 +125,7 @@ export default function VotingResultScreen() {
                 <View
                   key={option.id}
                   className={`mb-4 pb-4 ${
-                    index < voting.options.length - 1
+                    index < result.options.length - 1
                       ? 'border-b border-gray-100'
                       : ''
                   }`}
@@ -144,6 +172,9 @@ export default function VotingResultScreen() {
                   <Text className="text-xs text-gray-500 mt-1">
                     {option.vote_count || 0} lượt bỏ phiếu
                   </Text>
+                  <Text className="text-xs text-gray-500 mt-1">
+                    {option.total_area || 0} m2 bỏ phiếu
+                  </Text>
                 </View>
               );
             })}
@@ -158,8 +189,11 @@ export default function VotingResultScreen() {
                 {winningOption.name}
               </Text>
               <Text className="text-sm text-green-700 mt-2">
-                Với {winningOption.vote_count} lượt bỏ phiếu (
-                {getPercentage(winningOption.vote_count || 0)}%)
+                Với {winningOption.vote_count} lượt bỏ phiếu ({' '}
+                {winningOption.total_area} m2,{' '}
+                {winningOption.percentage ||
+                  getPercentage(winningOption.total_area || 0)}
+                %)
               </Text>
             </View>
           )}
