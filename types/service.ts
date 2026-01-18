@@ -37,7 +37,7 @@ export interface Service {
 }
 
 export interface SlotAvailability {
-  id: number;
+  id: string;
   service_id: number;
   start_time: string; // "15:00"
   end_time: string; // "16:00"

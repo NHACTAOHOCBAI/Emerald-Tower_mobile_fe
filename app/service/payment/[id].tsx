@@ -1,40 +1,87 @@
+import MyButton from '@/components/ui/Button';
 import { CustomHeader } from '@/components/ui/CustomHeader';
-import { MOCK_SERVICES } from '@/constants/mockServiceData';
+import { ServiceService } from '@/services/service.service';
 import { PaymentMethod } from '@/types/service';
-import { format } from 'date-fns';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { differenceInSeconds, format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Check, Clock, CreditCard, Info, User } from 'lucide-react-native';
-import { useState } from 'react';
-import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function PaymentScreen() {
-  const { id, date, slots, total } = useLocalSearchParams();
+  const { id, bookingData } = useLocalSearchParams();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(
     null
   );
 
-  const service = MOCK_SERVICES.find((s) => s.id === Number(id));
-  const parsedSlots = slots ? JSON.parse(slots as string) : [];
-  const totalAmount = Number(total);
-
-  if (!service) {
-    return (
-      <SafeAreaView className="flex-1 bg-white justify-center items-center">
-        <Text>Không tìm thấy dịch vụ</Text>
-      </SafeAreaView>
-    );
-  }
-
-  const timeSlots = parsedSlots.map((slot: string) => {
-    const [start, end] = slot.split('-');
-    return { start, end };
+  const { data: fetchedBooking, isLoading: isFetchingBooking } = useQuery({
+    queryKey: ['booking', id],
+    queryFn: () => ServiceService.getBookingById(Number(id)),
+    enabled: !!id && !bookingData,
+    select: (res) => res.data,
   });
 
-  const formattedDate = format(new Date(date as string), 'dd/MM/yyyy', {
-    locale: vi,
+  const paymentMutation = useMutation({
+    mutationFn: (body: { method: string; note: string }) =>
+      ServiceService.confirmPayment(Number(id), body),
+    onSuccess: (response) => {
+      const result = response.data;
+      router.replace({
+        pathname: '/service/payment/success',
+        params: {
+          bookingCode: result.code,
+          serviceName: result.service.name,
+          customerName: result.resident.fullName,
+          date: result.bookingDate,
+          slots: JSON.stringify(result.timestamps),
+          total: result.totalPrice,
+          method: selectedMethod,
+        },
+      } as any);
+    },
+    onError: (error: any) => {
+      Alert.alert(
+        'Lỗi thanh toán',
+        error?.response?.data?.message || 'Không thể xác nhận thanh toán'
+      );
+    },
   });
+
+  const data = bookingData ? JSON.parse(bookingData as string) : fetchedBooking;
+  const [timeLeft, setTimeLeft] = useState('');
+
+  useEffect(() => {
+    if (!data?.expiresAt) return;
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      const expiry = parseISO(data.expiresAt);
+      const diff = differenceInSeconds(expiry, now);
+
+      if (diff <= 0) {
+        clearInterval(interval);
+        Alert.alert('Hết hạn', 'Phiên giữ chỗ đã kết thúc.', [
+          { text: 'Quay lại', onPress: () => router.back() },
+        ]);
+      } else {
+        const mins = Math.floor(diff / 60);
+        const secs = diff % 60;
+        setTimeLeft(`${mins}:${secs.toString().padStart(2, '0')}`);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [data?.expiresAt]);
 
   const handlePayment = () => {
     if (!selectedMethod) {
@@ -42,37 +89,14 @@ export default function PaymentScreen() {
       return;
     }
 
-    Alert.alert(
-      'Xác nhận thanh toán',
-      `Bạn có chắc muốn thanh toán ${totalAmount.toLocaleString(
-        'vi-VN'
-      )} đ qua ${selectedMethod}?`,
-      [
-        {
-          text: 'Hủy',
-          style: 'cancel',
-        },
-        {
-          text: 'Xác nhận',
-          onPress: () => {
-            router.replace({
-              pathname: '/service/payment/success',
-              params: {
-                bookingCode: 'DV-TN-001-023',
-                serviceName: service.name,
-                date: date,
-                slots: slots,
-                total: total,
-                method: selectedMethod,
-              },
-            } as any);
-          },
-        },
-      ]
-    );
+    paymentMutation.mutate({
+      method: selectedMethod,
+      note: `Thanh toán qua ${selectedMethod} cho đơn hàng ${data.code}`,
+    });
   };
 
-  const remainingTime = '4:59';
+  if (isFetchingBooking) return <ActivityIndicator className="flex-1" />;
+  if (!data) return null;
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
@@ -81,8 +105,8 @@ export default function PaymentScreen() {
       <View className="bg-orange-50 px-6 py-3 flex-row items-center border-b border-orange-100">
         <Clock size={16} color="#c2410c" />
         <Text className="text-orange-700 text-sm font-medium ml-2">
-          Slot được giữ trong <Text className="font-bold">{remainingTime}</Text>{' '}
-          phút
+          Slot được giữ trong{' '}
+          <Text className="font-bold">{timeLeft || '--:--'}</Text> phút
         </Text>
       </View>
 
@@ -96,22 +120,18 @@ export default function PaymentScreen() {
                 Thông tin khách hàng
               </Text>
             </View>
-            <View className="bg-gray-50 rounded-xl p-3 gap-y-3">
+            <View className="p-3 gap-y-3">
               <View className="flex-row justify-between">
                 <Text className="text-sm text-gray-500">Họ tên</Text>
                 <Text className="text-sm font-bold text-gray-800">
-                  Nguyễn Lưu Ly
+                  {data.resident.fullName}
                 </Text>
               </View>
               <View className="flex-row justify-between">
                 <Text className="text-sm text-gray-500">Điện thoại</Text>
                 <Text className="text-sm font-bold text-gray-800">
-                  0912345678
+                  {data.resident.phoneNumber}
                 </Text>
-              </View>
-              <View className="flex-row justify-between">
-                <Text className="text-sm text-gray-500">Căn hộ</Text>
-                <Text className="text-sm font-bold text-gray-800">A12.05</Text>
               </View>
             </View>
           </View>
@@ -124,17 +144,26 @@ export default function PaymentScreen() {
                 Thông tin dịch vụ
               </Text>
             </View>
+
             <View className="gap-y-3">
+              <View className="flex-row justify-between">
+                <Text className="text-sm text-gray-500">Mã đơn hàng</Text>
+                <Text className="text-sm font-bold text-blue-600">
+                  {data.code}
+                </Text>
+              </View>
               <View className="flex-row justify-between">
                 <Text className="text-sm text-gray-500">Dịch vụ</Text>
                 <Text className="text-sm font-bold text-[#244B35]">
-                  {service.name}
+                  {data.service.name}
                 </Text>
               </View>
               <View className="flex-row justify-between">
                 <Text className="text-sm text-gray-500">Ngày sử dụng</Text>
                 <Text className="text-sm font-bold text-gray-800">
-                  {formattedDate}
+                  {format(parseISO(data.bookingDate), 'dd/MM/yyyy', {
+                    locale: vi,
+                  })}
                 </Text>
               </View>
               <View>
@@ -142,13 +171,13 @@ export default function PaymentScreen() {
                   Khung giờ đã chọn:
                 </Text>
                 <View className="flex-row flex-wrap gap-2 mt-1">
-                  {timeSlots.map((slot: any, index: number) => (
+                  {data.timestamps.map((slot: any, index: number) => (
                     <View
                       key={index}
                       className="bg-[#244B35]/10 px-3 py-1 rounded-full border border-[#244B35]/20"
                     >
                       <Text className="text-xs font-bold text-[#244B35]">
-                        {slot.start} - {slot.end}
+                        {slot.startTime} - {slot.endTime}
                       </Text>
                     </View>
                   ))}
@@ -235,14 +264,13 @@ export default function PaymentScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Tổng cộng */}
           <View className="bg-[#244B35] rounded-2xl p-5 shadow-md flex-row justify-between items-center mb-6">
             <View>
               <Text className="text-white/70 text-xs font-bold uppercase tracking-wider">
                 Tổng thanh toán
               </Text>
               <Text className="text-white text-2xl font-black mt-1">
-                {totalAmount.toLocaleString('vi-VN')} đ
+                {data.totalPrice.toLocaleString('vi-VN')} đ
               </Text>
             </View>
             <View className="bg-white/20 p-2 rounded-full">
@@ -253,17 +281,15 @@ export default function PaymentScreen() {
       </ScrollView>
 
       <View className="bg-white px-5 py-4 border-t border-gray-100 shadow-lg">
-        <TouchableOpacity
-          className={`py-4 rounded-xl shadow-sm ${
-            selectedMethod ? 'bg-[#E09B6B]' : 'bg-gray-300'
-          }`}
+        <MyButton
+          className={`w-full py-4 rounded-xl ${selectedMethod ? 'bg-[#E09B6B]' : 'bg-gray-300'}`}
+          textClassName="font-black text-base"
           onPress={handlePayment}
           disabled={!selectedMethod}
+          isLoading={paymentMutation.isPending}
         >
-          <Text className="text-white text-center font-black text-base">
-            Xác nhận thanh toán
-          </Text>
-        </TouchableOpacity>
+          XÁC NHẬN THANH TOÁN
+        </MyButton>
       </View>
     </SafeAreaView>
   );

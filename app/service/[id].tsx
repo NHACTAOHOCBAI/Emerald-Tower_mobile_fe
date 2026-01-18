@@ -1,16 +1,16 @@
+import MyButton from '@/components/ui/Button';
 import { CustomHeader } from '@/components/ui/CustomHeader';
 import DatePicker from '@/components/ui/DatePicker';
-import {
-  MOCK_SERVICES,
-  getMockSlotAvailability,
-} from '@/constants/mockServiceData';
+import { ServiceService } from '@/services/service.service';
 import { getDisplayDate } from '@/utils/displayDate';
 import { formatDuration } from '@/utils/formatDuration';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Calendar } from 'lucide-react-native';
 import { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   ScrollView,
@@ -22,10 +22,54 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ServiceDetailScreen() {
   const { id } = useLocalSearchParams();
-  const service = MOCK_SERVICES.find((s) => s.id === Number(id));
+  const queryClient = useQueryClient();
+  const { data: service, isLoading: isServiceLoading } = useQuery({
+    queryKey: ['service', id],
+    queryFn: async () => {
+      const response = await ServiceService.getById(Number(id));
+      return response.data;
+    },
+    enabled: !!id,
+  });
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
+  const dateString = format(selectedDate, 'yyyy-MM-dd');
+  const { data: slots, isLoading: isSlotsLoading } = useQuery({
+    queryKey: ['slots', id, dateString],
+    queryFn: async () => {
+      const response = await ServiceService.getSlots(Number(id), dateString);
+      return response.data;
+    },
+    enabled: !!id,
+  });
+
+  const reserveMutation = useMutation({
+    mutationFn: (body: {
+      bookingDate: string;
+      slots: { startTime: string; endTime: string }[];
+    }) => ServiceService.reserve(Number(id), body),
+    onSuccess: (response) => {
+      Alert.alert('Thành công', 'Đã giữ chỗ thành công, vui lòng thanh toán.');
+
+      router.push({
+        pathname: '/service/payment/[id]',
+        params: {
+          bookingData: JSON.stringify(response.data),
+          id: response.data.id,
+        },
+      } as any);
+
+      queryClient.invalidateQueries({ queryKey: ['slots', id, dateString] });
+    },
+    onError: (error: any) => {
+      const errorMsg =
+        error?.response?.data?.message || 'Có lỗi xảy ra khi đặt chỗ';
+      Alert.alert('Lỗi', errorMsg);
+    },
+  });
+
+  if (isServiceLoading) return <ActivityIndicator className="flex-1" />;
 
   if (!service) {
     return (
@@ -34,9 +78,6 @@ export default function ServiceDetailScreen() {
       </SafeAreaView>
     );
   }
-
-  const dateString = format(selectedDate, 'yyyy-MM-dd');
-  const slots = getMockSlotAvailability(service.id, dateString);
 
   const handleSelectSlot = (startTime: string, endTime: string) => {
     const slotKey = `${startTime}-${endTime}`;
@@ -53,22 +94,19 @@ export default function ServiceDetailScreen() {
       return;
     }
 
-    const total = service.unit_price * selectedSlots.length;
+    const formattedSlots = selectedSlots.map((slot) => {
+      const [start, end] = slot.split('-');
+      return { startTime: start, endTime: end };
+    });
 
-    router.push({
-      pathname: '/service/payment/[id]',
-      params: {
-        id: service.id,
-        date: dateString,
-        slots: JSON.stringify(selectedSlots),
-        total,
-      },
-    } as any);
+    reserveMutation.mutate({
+      bookingDate: dateString,
+      slots: formattedSlots,
+    });
   };
 
   const total = service.unit_price * selectedSlots.length;
   const isFree = service.unit_price === 0;
-
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <CustomHeader title={service.name} />
@@ -132,49 +170,52 @@ export default function ServiceDetailScreen() {
           </DatePicker>
         </View>
 
-        {/* Time slots */}
         <Text className="mb-1 text-[14px] font-semibold text-[#244B35] mb-3 mx-4">
           Chọn khung giờ
         </Text>
 
-        <View className="flex-row flex-wrap gap-3 px-4">
-          {slots.map((slot) => {
-            const slotKey = `${slot.start_time}-${slot.end_time}`;
-            const isSelected = selectedSlots.includes(slotKey);
-            const isFull = slot.remaining_slot === 0;
+        {isSlotsLoading ? (
+          <ActivityIndicator className="flex-1" />
+        ) : (
+          <View className="flex-row flex-wrap gap-3 px-4">
+            {slots?.map((slot) => {
+              const slotKey = `${slot.start_time}-${slot.end_time}`;
+              const isSelected = selectedSlots.includes(slotKey);
+              const isFull = slot.remaining_slot === 0;
 
-            let containerStyle = '';
-            let textStyle = '';
+              let containerStyle = '';
+              let textStyle = '';
 
-            if (isFull) {
-              containerStyle = 'bg-white border border-gray-400';
-              textStyle = 'text-gray-500';
-            } else if (isSelected) {
-              containerStyle = 'bg-[#244B35]';
-              textStyle = 'text-white';
-            } else {
-              containerStyle = 'bg-white border border-[#3EAA6D]';
-              textStyle = 'text-[#3EAA6D]';
-            }
+              if (isFull) {
+                containerStyle = 'bg-white border border-gray-400';
+                textStyle = 'text-gray-500';
+              } else if (isSelected) {
+                containerStyle = 'bg-[#244B35]';
+                textStyle = 'text-white';
+              } else {
+                containerStyle = 'bg-white border border-[#3EAA6D]';
+                textStyle = 'text-[#3EAA6D]';
+              }
 
-            return (
-              <TouchableOpacity
-                key={slot.id}
-                onPress={() =>
-                  !isFull && handleSelectSlot(slot.start_time, slot.end_time)
-                }
-                disabled={isFull}
-                className={`px-4 py-3 rounded-md flex-1 basis-[30%] ${containerStyle}`}
-              >
-                <Text
-                  className={`text-center text-sm font-medium ${textStyle}`}
+              return (
+                <TouchableOpacity
+                  key={slot.id}
+                  onPress={() =>
+                    !isFull && handleSelectSlot(slot.start_time, slot.end_time)
+                  }
+                  disabled={isFull}
+                  className={`px-4 py-3 rounded-md flex-1 basis-[30%] ${containerStyle}`}
                 >
-                  {slot.start_time} - {slot.end_time}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+                  <Text
+                    className={`text-center text-sm font-medium ${textStyle}`}
+                  >
+                    {slot.start_time} - {slot.end_time}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
       </ScrollView>
 
       <View className="bg-white px-5 py-4 border-t border-gray-100">
@@ -184,14 +225,14 @@ export default function ServiceDetailScreen() {
             {total.toLocaleString('vi-VN')} đ
           </Text>
         </View>
-        <TouchableOpacity
-          className="bg-[#E09B6B] py-4 rounded-lg"
+        <MyButton
+          className="w-full bg-[#E09B6B] py-4 rounded-lg"
+          textClassName="font-bold text-base uppercase"
           onPress={handleBooking}
+          isLoading={reserveMutation.isPending}
         >
-          <Text className="text-white text-center font-bold text-base">
-            ĐẶT NGAY
-          </Text>
-        </TouchableOpacity>
+          ĐẶT NGAY
+        </MyButton>
       </View>
     </SafeAreaView>
   );
