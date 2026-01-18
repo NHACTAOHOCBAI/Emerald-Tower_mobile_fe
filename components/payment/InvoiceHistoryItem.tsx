@@ -1,5 +1,4 @@
 import { ChevronRight } from "lucide-react-native";
-import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
 const STATUS_CONFIG = {
@@ -8,12 +7,20 @@ const STATUS_CONFIG = {
   overdue: { text: "Quá hạn", bg: "bg-red-100", color: "text-red-500" },
 };
 
-export const InvoiceHistoryItem = ({ item }: { item: any }) => {
+interface InvoiceHistoryItemProps {
+  item: any;
+  onPress?: () => void;
+}
+
+export const InvoiceHistoryItem = ({ item, onPress }: InvoiceHistoryItemProps) => {
   const config =
     STATUS_CONFIG[item.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.unpaid;
 
   return (
-    <TouchableOpacity className="bg-white p-4 rounded-xl mb-3 flex-row justify-between shadow-sm border border-gray-100">
+    <TouchableOpacity
+      className="bg-white p-4 rounded-xl mb-3 flex-row justify-between shadow-sm border border-gray-100"
+      onPress={onPress}
+    >
       <View className="flex-1 mr-2 justify-center">
         <Text className="text-xs text-gray-400 mb-1">{item.invoiceCode || item.id}</Text>
         <Text className="font-bold text-base text-gray-800 mb-1">{item.title}</Text>

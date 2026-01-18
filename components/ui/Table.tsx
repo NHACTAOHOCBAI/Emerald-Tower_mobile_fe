@@ -30,7 +30,7 @@ export function GenericTable<T>({
     return "items-start";
   };
 
-  // căn text
+  // căn chỉnh text
   const getTextAlignClass = (align?: string) => {
     if (align === "center") return "text-center";
     if (align === "right") return "text-right";
@@ -51,7 +51,11 @@ export function GenericTable<T>({
           {columns.map((col, index) => (
             <View
               key={index}
-              className={cn(col.width || "flex-1", getAlignClass(col.align))}
+              className={cn(
+                col.width || "flex-1",
+                "justify-center",
+                getAlignClass(col.align),
+              )}
             >
               <Text
                 className={cn(
@@ -86,7 +90,11 @@ export function GenericTable<T>({
                   return (
                     <View
                       key={colIndex}
-                      className={cn(col.width || "flex-1", getAlignClass(col.align))}
+                      className={cn(
+                        col.width || "flex-1",
+                        "justify-center",
+                        getAlignClass(col.align),
+                      )}
                     >
                       {React.isValidElement(value) ? (
                         value
@@ -112,7 +120,9 @@ export function GenericTable<T>({
         </View>
 
         {footerComponent && (
-          <View className="p-4 bg-white border-t border-gray-200">{footerComponent}</View>
+          <View className="py-4 pl-20 pr-2 bg-white border-t border-gray-200">
+            {footerComponent}
+          </View>
         )}
       </View>
     </>

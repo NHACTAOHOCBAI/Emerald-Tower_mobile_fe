@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { CreditCard } from "lucide-react-native";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -15,15 +15,22 @@ export default function PaymentDetailScreen() {
 
   const handleToggle = (id: string) => {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
+  };
+
+  const handleGoToDetail = (invoiceId: string) => {
+    router.push({
+      pathname: "/payment/detail/[id]",
+      params: { id: invoiceId },
+    });
   };
 
   // tính tổng tiền
   const totalPay = useMemo(() => {
     return MOCK_DETAIL_INVOICES.filter((bill) => selectedIds.includes(bill.id)).reduce(
       (sum, bill) => sum + bill.totalAmount,
-      0
+      0,
     );
   }, [selectedIds]);
 
@@ -72,6 +79,7 @@ export default function PaymentDetailScreen() {
             data={bill}
             isSelected={selectedIds.includes(bill.id)}
             onToggleSelect={() => handleToggle(bill.id)}
+            onPressDetail={() => handleGoToDetail(bill.id)}
           />
         ))}
 

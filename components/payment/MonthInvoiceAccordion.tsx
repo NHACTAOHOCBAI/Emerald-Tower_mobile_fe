@@ -8,13 +8,14 @@ import {
   Square,
   Zap,
 } from "lucide-react-native";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
 interface AccordionItemProps {
   data: MonthlyInvoice;
   isSelected: boolean;
   onToggleSelect: () => void;
+  onPressDetail?: () => void;
 }
 
 const ICONS = {
@@ -27,6 +28,7 @@ export const AccordionItem = ({
   data,
   isSelected,
   onToggleSelect,
+  onPressDetail,
 }: AccordionItemProps) => {
   const [expanded, setExpanded] = useState(true);
 
@@ -48,14 +50,22 @@ export const AccordionItem = ({
             )}
           </TouchableOpacity>
 
-          <View>
-            <Text className="text-xs text-gray-400 mb-0.5">{data.invoiceCode}</Text>
-            <Text className="font-bold text-base text-gray-800">{data.monthTitle}</Text>
-            <Text className="text-xs text-gray-400 mt-1">{data.period}</Text>
-          </View>
+          <TouchableOpacity
+            onPress={onPressDetail}
+            className="flex-1 mr-2"
+          >
+            <View>
+              <Text className="text-xs text-gray-400 mb-0.5">{data.invoiceCode}</Text>
+              <Text className="font-bold text-base text-gray-800">{data.monthTitle}</Text>
+              <Text className="text-xs text-gray-400 mt-1">{data.period}</Text>
+              <Text className="text-xs text-blue-500 font-semibold mt-1">
+                Xem chi tiết &gt;
+              </Text>
+            </View>
+          </TouchableOpacity>
         </View>
 
-        <View className="flex-row items-center">
+        <View className="items-end">
           <Text className="font-bold text-base text-gray-800 mr-2">
             {data.totalAmount.toLocaleString("vi-VN")} đ
           </Text>

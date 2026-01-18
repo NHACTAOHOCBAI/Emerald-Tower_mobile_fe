@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { BarChart3, Plus } from "lucide-react-native";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -25,7 +25,7 @@ export default function PaymentScreen() {
 
   const { totalDebt, invoiceCount, nearestDueDate } = useMemo(() => {
     const activeInvoices = MOCK_HISTORY.filter(
-      (item) => item.status === "unpaid" || item.status === "overdue"
+      (item) => item.status === "unpaid" || item.status === "overdue",
     );
 
     const total = activeInvoices.reduce((sum, item) => sum + item.amount, 0);
@@ -34,7 +34,7 @@ export default function PaymentScreen() {
     let nearest = null;
     if (activeInvoices.length > 0) {
       const sortedByDate = [...activeInvoices].sort(
-        (a, b) => parseDate(a.dueDate).getTime() - parseDate(b.dueDate).getTime()
+        (a, b) => parseDate(a.dueDate).getTime() - parseDate(b.dueDate).getTime(),
       );
       nearest = sortedByDate[0].dueDate;
     }
@@ -119,7 +119,16 @@ export default function PaymentScreen() {
         <Text className="text-lg font-bold text-main mb-3">Lịch sử hóa đơn</Text>
         <View className="pb-10">
           {MOCK_HISTORY.map((item) => (
-            <InvoiceHistoryItem key={item.id} item={item} />
+            <InvoiceHistoryItem
+              key={item.id}
+              item={item}
+              onPress={() =>
+                router.push({
+                  pathname: "/payment/detail/[id]",
+                  params: { id: item.id },
+                })
+              }
+            />
           ))}
         </View>
       </ScrollView>
