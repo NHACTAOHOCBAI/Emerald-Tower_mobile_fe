@@ -80,7 +80,7 @@ export default function PaymentScreen() {
           <TouchableOpacity
             disabled={!isInputPeriod}
             onPress={() => {
-              router.push("/payment/input-meter")
+              router.push("/payment/input-meter");
             }}
             className={`flex-1 p-3 rounded-xl border flex-row items-center justify-center ${
               isInputPeriod
@@ -98,7 +98,12 @@ export default function PaymentScreen() {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity className="flex-1 bg-transparent p-3 rounded-xl border border-gray-400 flex-row items-center justify-center">
+          <TouchableOpacity
+            className="flex-1 bg-transparent p-3 rounded-xl border border-gray-400 flex-row items-center justify-center"
+            onPress={() => {
+              router.push("/payment/statistics");
+            }}
+          >
             <BarChart3 size={20} color="#E09B6B" />
             <Text className="ml-2 font-semibold text-gray-800">Thống kê</Text>
           </TouchableOpacity>

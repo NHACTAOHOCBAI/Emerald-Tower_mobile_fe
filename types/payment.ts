@@ -24,3 +24,11 @@ export interface MonthlyInvoice {
   status: "unpaid" | "selected";
   items: ServiceItem[];
 }
+
+export interface StatisticsItem {
+  month: string;
+  elec: string;
+  water: string;
+  service: string;
+  total: string;
+}
