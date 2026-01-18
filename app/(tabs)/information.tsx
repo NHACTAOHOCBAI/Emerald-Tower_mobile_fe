@@ -2,17 +2,24 @@ import { ApartmentTab } from "@/components/information/ApartmentTab";
 import { ResidentTab } from "@/components/information/ResidentTab";
 import MyButton from "@/components/ui/Button";
 import { CustomHeader } from "@/components/ui/CustomHeader";
-import { MOCK_APARTMENT, MOCK_RESIDENT } from "@/constants/mockInformationData";
-import React, { useState } from "react";
-import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/AuthContext";
+import { useResidentProfile } from "@/hooks/useResident";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function InformationScreen() {
   const { logout } = useAuth();
   const [activeTab, setActiveTab] = useState<"resident" | "apartment">("resident");
-  const [residentData] = useState(MOCK_RESIDENT);
-  const [apartmentData] = useState(MOCK_APARTMENT);
+
+  const { data: residentData, isLoading, isError } = useResidentProfile();
 
   const handleLogout = () => {
     Alert.alert("Đăng xuất", "Bạn chắc chắn muốn đăng xuất?", [
@@ -38,7 +45,7 @@ export default function InformationScreen() {
             }`}
           >
             <Text
-              className={`text-sm font-bold ${
+              className={`text-base font-bold ${
                 activeTab === "resident" ? "text-white" : "text-gray-400"
               }`}
             >
@@ -53,7 +60,7 @@ export default function InformationScreen() {
             }`}
           >
             <Text
-              className={`text-sm font-bold ${
+              className={`text-base font-bold ${
                 activeTab === "apartment" ? "text-white" : "text-gray-400"
               }`}
             >
@@ -64,13 +71,26 @@ export default function InformationScreen() {
       </View>
 
       <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
-        <View style={{ display: activeTab === "resident" ? "flex" : "none" }}>
-          <ResidentTab data={residentData} />
-        </View>
+        {isLoading ? (
+          <View className="py-20 items-center">
+            <ActivityIndicator size="large" color="#244B35" />
+            <Text className="text-gray-500 mt-2">Đang tải thông tin...</Text>
+          </View>
+        ) : isError || !residentData ? (
+          <View className="py-20 items-center">
+            <Text className="text-red-500 font-medium">Không thể tải dữ liệu</Text>
+          </View>
+        ) : (
+          <>
+            <View style={{ display: activeTab === "resident" ? "flex" : "none" }}>
+              <ResidentTab data={residentData} />
+            </View>
 
-        <View style={{ display: activeTab === "apartment" ? "flex" : "none" }}>
-          <ApartmentTab data={apartmentData} />
-        </View>
+            <View style={{ display: activeTab === "apartment" ? "flex" : "none" }}>
+              <ApartmentTab data={residentData.apartments || []} />
+            </View>
+          </>
+        )}
 
         <View className="mt-6 pb-6">
           <MyButton
