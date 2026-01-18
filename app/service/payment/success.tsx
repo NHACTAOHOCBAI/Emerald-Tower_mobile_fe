@@ -1,6 +1,6 @@
 import { CustomHeader } from '@/components/ui/CustomHeader';
-import { PaymentMethod, getPaymentMethodLabel } from '@/types/service';
-import { format } from 'date-fns';
+import { getPaymentMethodLabel, PaymentMethod } from '@/types/service';
+import { format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Href, router, useLocalSearchParams } from 'expo-router';
 import { CheckCircle, Download, Share2 } from 'lucide-react-native';
@@ -15,22 +15,16 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function PaymentSuccessScreen() {
-  const { bookingCode, serviceName, date, slots, total, method } =
+  const { bookingCode, serviceName, date, slots, total, method, customerName } =
     useLocalSearchParams();
 
+  const formattedDate = date
+    ? format(parseISO(date as string), 'dd/MM/yyyy', { locale: vi })
+    : '---';
+
   const parsedSlots = slots ? JSON.parse(slots as string) : [];
+
   const totalAmount = Number(total);
-  const paymentMethod = method as PaymentMethod;
-
-  const timeSlots = parsedSlots.map((slot: string) => {
-    const [start, end] = slot.split('-');
-    return { start, end };
-  });
-
-  const formattedDate = format(new Date(date as string), 'dd/MM/yyyy', {
-    locale: vi,
-  });
-
   const paidAt = format(new Date(), 'HH:mm, dd/MM/yyyy', { locale: vi });
 
   const handleDownloadPDF = () => {
@@ -40,9 +34,7 @@ export default function PaymentSuccessScreen() {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Booking thành công!\nMã: ${bookingCode}\nDịch vụ: ${serviceName}\nNgày: ${formattedDate}\nTổng tiền: ${totalAmount.toLocaleString(
-          'vi-VN'
-        )} đ`,
+        message: `Booking thành công!\nMã: ${bookingCode}\nKhách hàng: ${customerName}\nDịch vụ: ${serviceName}\nNgày: ${formattedDate}\nTổng tiền: ${totalAmount.toLocaleString('vi-VN')} đ`,
       });
     } catch (error) {
       console.error(error);
@@ -91,7 +83,7 @@ export default function PaymentSuccessScreen() {
               <View className="py-2 border-b border-gray-100">
                 <Text className="text-xs text-gray-500 mb-1">Khách hàng</Text>
                 <Text className="text-sm font-semibold text-gray-800">
-                  Nguyễn Lưu Ly
+                  {customerName}
                 </Text>
               </View>
 
@@ -111,12 +103,12 @@ export default function PaymentSuccessScreen() {
 
               <View className="py-2 border-b border-gray-100">
                 <Text className="text-xs text-gray-500 mb-1">Thời gian</Text>
-                {timeSlots.map((slot: any, index: number) => (
+                {parsedSlots.map((slot: any, index: number) => (
                   <Text
                     key={index}
                     className="text-sm font-semibold text-gray-800"
                   >
-                    {slot.start} - {slot.end}
+                    {slot.startTime} - {slot.endTime}
                   </Text>
                 ))}
               </View>
@@ -126,7 +118,7 @@ export default function PaymentSuccessScreen() {
                   Phương thức thanh toán
                 </Text>
                 <Text className="text-sm font-semibold text-gray-800">
-                  {getPaymentMethodLabel(paymentMethod)}
+                  {getPaymentMethodLabel(method as PaymentMethod)}
                 </Text>
               </View>
             </View>
