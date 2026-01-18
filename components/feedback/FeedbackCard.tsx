@@ -37,8 +37,8 @@ export default function FeedbackCard({ feedback, onPress }: FeedbackCardProps) {
   const statusColor = getFeedbackStatusColor(feedback.status);
 
   const formattedDate = format(
-    new Date(feedback.created_at),
-    "dd/MM/yyyy · HH'h'",
+    new Date(feedback.createdAt),
+    'HH:mm, dd/MM/yyyy',
     { locale: vi }
   );
 
@@ -56,9 +56,7 @@ export default function FeedbackCard({ feedback, onPress }: FeedbackCardProps) {
       <View className="flex-row justify-between items-start mb-2">
         <View className="flex-1">
           <View className="flex-row items-center mb-1">
-            <Text className="text-xs text-gray-500 mr-2">
-              {feedback.code} · {formattedDate}
-            </Text>
+            <Text className="text-xs text-gray-500 mr-2">{formattedDate}</Text>
           </View>
           <Text
             className="text-base font-semibold text-gray-900"

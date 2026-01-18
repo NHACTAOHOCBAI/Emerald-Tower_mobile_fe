@@ -1,17 +1,57 @@
+import MyButton from '@/components/ui/Button';
 import { CustomHeader } from '@/components/ui/CustomHeader';
-import { MOCK_FEEDBACKS } from '@/constants/mockFeedbackData';
+import { FeedbackService } from '@/services/feedback.service';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Star } from 'lucide-react-native';
 import { useState } from 'react';
-import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RatingScreen() {
   const { id } = useLocalSearchParams();
-  const feedback = MOCK_FEEDBACKS.find((f) => f.id === Number(id));
+  const queryClient = useQueryClient();
 
   const [rating, setRating] = useState(0);
+  const [feedbackText, setFeedbackText] = useState('');
   const [hoveredRating, setHoveredRating] = useState(0);
+
+  const { data: feedback, isLoading } = useQuery({
+    queryKey: ['feedback', id],
+    queryFn: () => FeedbackService.getById(Number(id)),
+  });
+
+  const rateMutation = useMutation({
+    mutationFn: () => FeedbackService.rate(Number(id), rating, feedbackText),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['feedback', id] });
+      queryClient.invalidateQueries({ queryKey: ['my-feedbacks'] });
+
+      Alert.alert('Cảm ơn!', 'Đánh giá của bạn đã được ghi nhận', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    },
+    onError: (error: any) => {
+      const msg = error.response?.data?.message || 'Không thể gửi đánh giá';
+      Alert.alert('Lỗi', Array.isArray(msg) ? msg[0] : msg);
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 bg-white justify-center">
+        <ActivityIndicator color="#244B35" />
+      </SafeAreaView>
+    );
+  }
 
   if (!feedback) {
     return (
@@ -26,13 +66,7 @@ export default function RatingScreen() {
       Alert.alert('Thông báo', 'Vui lòng chọn số sao đánh giá');
       return;
     }
-
-    Alert.alert('Cảm ơn!', 'Đánh giá của bạn đã được ghi nhận', [
-      {
-        text: 'OK',
-        onPress: () => router.back(),
-      },
-    ]);
+    rateMutation.mutate();
   };
 
   const ratingLabels = [
@@ -51,7 +85,6 @@ export default function RatingScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View className="p-5">
           <View className="bg-white rounded-lg p-4 mb-6">
-            <Text className="text-xs text-gray-500 mb-2">{feedback.code}</Text>
             <Text className="text-base font-bold text-gray-900">
               {feedback.title}
             </Text>
@@ -61,7 +94,7 @@ export default function RatingScreen() {
             <Text className="text-lg font-bold text-gray-900 mb-2">
               Mức độ hài lòng <Text className="text-red-500">*</Text>
             </Text>
-            <Text className="text-sm text-gray-600 mb-6 text-center">
+            <Text className="text-sm text-gray-600 p-6 mb-6 text-center">
               Bạn đánh giá thế nào về quá trình xử lý phản ánh này?
             </Text>
 
@@ -110,53 +143,30 @@ export default function RatingScreen() {
 
           <View className="bg-white rounded-lg p-4 mb-6">
             <Text className="text-sm font-semibold text-gray-700 mb-3">
-              Chi tiết xử lý
+              Ý kiến phản hồi (tùy chọn)
             </Text>
-
-            <View className="flex-row items-center justify-between py-3 border-b border-gray-100">
-              <View className="flex-row items-center">
-                <View className="w-2 h-2 bg-green-500 rounded-full mr-2" />
-                <Text className="text-sm text-gray-700">Tiếp nhận</Text>
-              </View>
-              <Text className="text-sm text-gray-500">08:15 · 14/mm/que</Text>
-            </View>
-
-            <View className="flex-row items-center justify-between py-3 border-b border-gray-100">
-              <View className="flex-row items-center">
-                <View className="w-2 h-2 bg-orange-500 rounded-full mr-2" />
-                <Text className="text-sm text-gray-700">Đang xử lý</Text>
-              </View>
-              <Text className="text-sm text-gray-500">08:23 · 14/mm/que</Text>
-            </View>
-
-            <View className="flex-row items-center justify-between py-3 border-b border-gray-100">
-              <View className="flex-row items-center">
-                <View className="w-2 h-2 bg-blue-500 rounded-full mr-2" />
-                <Text className="text-sm text-gray-700">Xác nhận lại</Text>
-              </View>
-              <Text className="text-sm text-gray-500">-</Text>
-            </View>
-
-            <View className="flex-row items-center justify-between py-3">
-              <View className="flex-row items-center">
-                <View className="w-2 h-2 bg-green-600 rounded-full mr-2" />
-                <Text className="text-sm text-gray-700">Hoàn tất</Text>
-              </View>
-              <Text className="text-sm text-gray-500">-</Text>
-            </View>
+            <TextInput
+              placeholder="Chia sẻ cảm nhận của bạn về quá trình xử lý..."
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              value={feedbackText}
+              onChangeText={setFeedbackText}
+              className="bg-gray-50 border border-gray-100 rounded-lg p-3 text-sm"
+            />
           </View>
 
-          <TouchableOpacity
-            onPress={handleSubmitRating}
-            className={`py-4 rounded-lg ${
+          <MyButton
+            className={`py-4 rounded-lg center ${
               rating > 0 ? 'bg-[#244B35]' : 'bg-gray-300'
             }`}
             disabled={rating === 0}
+            textClassName="font-bold text-base text-white text-center"
+            onPress={handleSubmitRating}
+            isLoading={rateMutation.isPending}
           >
-            <Text className="text-white text-center font-bold text-base">
-              Gửi
-            </Text>
-          </TouchableOpacity>
+            Gửi
+          </MyButton>
         </View>
       </ScrollView>
     </SafeAreaView>

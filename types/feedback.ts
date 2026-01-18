@@ -1,6 +1,7 @@
 export enum FeedbackStatus {
   PENDING = 'PENDING',
-  IN_PROGRESS = 'IN_PROGRESS',
+  RECEIVED = 'RECEIVED',
+  PROCESSING = 'PROCESSING',
   RESOLVED = 'RESOLVED',
   REJECTED = 'REJECTED',
 }
@@ -23,28 +24,30 @@ export interface FeedbackImage {
 
 export interface Feedback {
   id: number;
-  code: string; // Auto-generated: #PA0323
-  resident_id: number;
-  resident_name?: string;
-  apartment?: string;
+  type: IssueType;
+  typeLabel: string;
   title: string;
   description: string;
-  type: IssueType;
-  location: {
-    building: string; // Tòa A
-    floor: number; // Tầng 3
-    room?: string; // Phòng 301
-  };
-  images: FeedbackImage[];
+  block?: Block;
+  floor: number;
+  detailLocation: string;
+  fileUrls: string[];
   status: FeedbackStatus;
-  created_at: string;
-  updated_at: string;
-  resolved_at?: string;
-  response?: string;
-  rating?: number; // 1-5
-  is_urgent: boolean;
-  estimated_completion_date?: string;
-  ticket_id?: number;
+  statusLabel: string;
+  isUrgent: boolean;
+  rating: number | null;
+  feedback: string | null;
+  reporter: { id: number; fullName: string; phoneNumber: string } | null;
+  createdAt: string;
+  updatedAt: string;
+  rejectionReason?: string;
+  estimatedCompletionDate?: string;
+}
+
+export interface Block {
+  id: number;
+  name: string;
+  totalFloors: number;
 }
 
 export interface FeedbackCategory {
@@ -96,7 +99,8 @@ export const FEEDBACK_CATEGORIES: FeedbackCategory[] = [
 export function getFeedbackStatusLabel(status: FeedbackStatus): string {
   const labels: Record<FeedbackStatus, string> = {
     [FeedbackStatus.PENDING]: 'Chờ xử lý',
-    [FeedbackStatus.IN_PROGRESS]: 'Đang xử lý',
+    [FeedbackStatus.RECEIVED]: 'Đã tiếp nhận',
+    [FeedbackStatus.PROCESSING]: 'Đang xử lý',
     [FeedbackStatus.RESOLVED]: 'Hoàn tất',
     [FeedbackStatus.REJECTED]: 'Từ chối',
   };
@@ -106,7 +110,8 @@ export function getFeedbackStatusLabel(status: FeedbackStatus): string {
 export function getFeedbackStatusColor(status: FeedbackStatus): string {
   const colors: Record<FeedbackStatus, string> = {
     [FeedbackStatus.PENDING]: '#F59E0B', // Orange
-    [FeedbackStatus.IN_PROGRESS]: '#3B82F6', // Blue
+    [FeedbackStatus.RECEIVED]: '#6366F1', // Indigo
+    [FeedbackStatus.PROCESSING]: '#3B82F6', // Blue
     [FeedbackStatus.RESOLVED]: '#10B981', // Green
     [FeedbackStatus.REJECTED]: '#EF4444', // Red
   };
