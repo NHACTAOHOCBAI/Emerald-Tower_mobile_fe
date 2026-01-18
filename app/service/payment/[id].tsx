@@ -1,12 +1,14 @@
+import MomoIcon from '@/assets/images/momo-icon';
+import VNPayIcon from '@/assets/images/vnpay-icon';
 import MyButton from '@/components/ui/Button';
 import { CustomHeader } from '@/components/ui/CustomHeader';
 import { ServiceService } from '@/services/service.service';
 import { PaymentMethod } from '@/types/service';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { differenceInSeconds, format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Check, Clock, CreditCard, Info, User } from 'lucide-react-native';
+import { Clock, CreditCard, Info, User } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -19,6 +21,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function PaymentScreen() {
+  const queryClient = useQueryClient();
   const { id, bookingData } = useLocalSearchParams();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(
     null
@@ -48,6 +51,12 @@ export default function PaymentScreen() {
           method: selectedMethod,
         },
       } as any);
+      queryClient.invalidateQueries({ queryKey: ['bookings', 'mine'] });
+      queryClient.invalidateQueries({ queryKey: ['booking', id] });
+      const dateString = result.bookingDate;
+      queryClient.invalidateQueries({
+        queryKey: ['slots', id, dateString],
+      });
     },
     onError: (error: any) => {
       Alert.alert(
@@ -195,71 +204,41 @@ export default function PaymentScreen() {
               </Text>
             </View>
 
-            {/* VNPAY */}
             <TouchableOpacity
               onPress={() => setSelectedMethod(PaymentMethod.VNPAY)}
-              activeOpacity={0.7}
-              className={`border-2 rounded-xl p-3 mb-3 flex-row items-center transition-all ${
-                selectedMethod === PaymentMethod.VNPAY
-                  ? 'border-[#244B35] bg-[#244B35]/5'
-                  : 'border-gray-100'
-              }`}
-            >
-              <View className="w-12 h-12 bg-blue-50 rounded-xl items-center justify-center mr-3 border border-blue-100">
-                <Text className="text-blue-600 font-black text-xs">VNPAY</Text>
-              </View>
-              <View className="flex-1">
-                <Text className="text-sm font-bold text-gray-800">
-                  Cổng thanh toán VNPay
-                </Text>
-                <Text className="text-[10px] text-gray-500">
-                  Thẻ ATM / QR Code / Internet Banking
-                </Text>
-              </View>
-              <View
-                className={`w-5 h-5 rounded-full border-2 items-center justify-center ${
+              className="bg-white p-4 rounded-xl mb-4 flex-row items-center border shadow-sm"
+              style={{
+                borderColor:
                   selectedMethod === PaymentMethod.VNPAY
-                    ? 'bg-[#244B35] border-[#244B35]'
-                    : 'border-gray-300'
-                }`}
-              >
-                {selectedMethod === PaymentMethod.VNPAY && (
-                  <Check size={12} color="white" strokeWidth={4} />
-                )}
+                    ? '#E09B6B'
+                    : '#F3F4F6',
+              }}
+            >
+              <View className="w-10 h-10 mr-3 items-center justify-center">
+                <VNPayIcon width={30} height={30} />
+              </View>
+
+              <View>
+                <Text className="font-bold text-base text-gray-800">VNPay</Text>
+                <Text className="text-sm text-gray-400">Thanh toán qua QR</Text>
               </View>
             </TouchableOpacity>
 
-            {/* Momo */}
             <TouchableOpacity
               onPress={() => setSelectedMethod(PaymentMethod.MOMO)}
-              activeOpacity={0.7}
-              className={`border-2 rounded-xl p-3 flex-row items-center transition-all ${
-                selectedMethod === PaymentMethod.MOMO
-                  ? 'border-[#244B35] bg-[#244B35]/5'
-                  : 'border-gray-100'
-              }`}
+              className="bg-white p-4 rounded-xl mb-6 flex-row items-center border shadow-sm"
+              style={{
+                borderColor:
+                  selectedMethod === PaymentMethod.MOMO ? '#E09B6B' : '#F3F4F6',
+              }}
             >
-              <View className="w-12 h-12 bg-pink-50 rounded-xl items-center justify-center mr-3 border border-pink-100">
-                <Text className="text-pink-600 font-black text-xs">MOMO</Text>
+              <View className="w-10 h-10 mr-3 items-center justify-center">
+                <MomoIcon width={30} height={30} />
               </View>
-              <View className="flex-1">
-                <Text className="text-sm font-bold text-gray-800">
-                  Ví điện tử Momo
-                </Text>
-                <Text className="text-[10px] text-gray-500">
-                  Thanh toán nhanh qua ứng dụng Momo
-                </Text>
-              </View>
-              <View
-                className={`w-5 h-5 rounded-full border-2 items-center justify-center ${
-                  selectedMethod === PaymentMethod.MOMO
-                    ? 'bg-[#244B35] border-[#244B35]'
-                    : 'border-gray-300'
-                }`}
-              >
-                {selectedMethod === PaymentMethod.MOMO && (
-                  <Check size={12} color="white" strokeWidth={4} />
-                )}
+
+              <View>
+                <Text className="font-bold text-base text-gray-800">Momo</Text>
+                <Text className="text-sm text-gray-400">Ví điện tử Momo</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -282,13 +261,17 @@ export default function PaymentScreen() {
 
       <View className="bg-white px-5 py-4 border-t border-gray-100 shadow-lg">
         <MyButton
+          variant="secondary"
           className={`w-full py-4 rounded-xl ${selectedMethod ? 'bg-[#E09B6B]' : 'bg-gray-300'}`}
           textClassName="font-black text-base"
           onPress={handlePayment}
           disabled={!selectedMethod}
           isLoading={paymentMutation.isPending}
         >
-          XÁC NHẬN THANH TOÁN
+          <CreditCard size={20} color="white" style={{ marginRight: 5 }} />
+          <Text className="text-white font-bold text-base">
+            Xác nhận thanh toán
+          </Text>
         </MyButton>
       </View>
     </SafeAreaView>

@@ -1,10 +1,17 @@
 import BookingCard from '@/components/service/BookingCard';
 import { CustomHeader } from '@/components/ui/CustomHeader';
-import { MOCK_BOOKINGS } from '@/constants/mockServiceData';
+import { ServiceService } from '@/services/service.service';
 import { BookingStatus } from '@/types/service';
+import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import {
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type TabKey = 'mine' | 'pending' | 'history';
@@ -38,20 +45,20 @@ const TABS: Tab[] = [
 export default function MyBookingsScreen() {
   const [activeTab, setActiveTab] = useState<TabKey>('pending');
 
+  const {
+    data: bookings,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ['bookings', 'mine'],
+    queryFn: () => ServiceService.getMyBookings(),
+    select: (res) => res.data,
+  });
+
   const currentTab = TABS.find((t) => t.key === activeTab);
-  const filteredBookings = MOCK_BOOKINGS.filter(
+  const filteredBookings = (bookings || []).filter(
     currentTab?.filter || (() => true)
   );
-
-  const getPendingTimeRemaining = (booking: any) => {
-    if (booking.status !== BookingStatus.PENDING) return null;
-    const now = new Date();
-    const bookingDate = new Date(booking.date);
-    const diff = bookingDate.getTime() - now.getTime();
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    return `${hours}:${minutes.toString().padStart(2, '0')}`;
-  };
 
   const handlePressBooking = (bookingId: number) => {
     router.push({
@@ -67,7 +74,7 @@ export default function MyBookingsScreen() {
         <View className="flex-row gap-2 mb-4">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.key;
-            const count = MOCK_BOOKINGS.filter(tab.filter).length;
+            const count = (bookings || []).filter(tab.filter).length;
 
             return (
               <TouchableOpacity
@@ -94,6 +101,9 @@ export default function MyBookingsScreen() {
         className="flex-1"
         showsVerticalScrollIndicator={false}
         contentContainerClassName="p-5"
+        refreshControl={
+          <RefreshControl refreshing={isLoading} onRefresh={refetch} />
+        }
       >
         {filteredBookings.length === 0 ? (
           <View className="py-20 items-center">

@@ -1,13 +1,12 @@
 import { CustomHeader } from '@/components/ui/CustomHeader';
-import { MOCK_BOOKINGS, MOCK_PAYMENTS } from '@/constants/mockServiceData';
+import { ServiceService } from '@/services/service.service';
 import {
   BookingStatus,
   getBookingStatusColor,
   getBookingStatusLabel,
-  getPaymentMethodLabel,
 } from '@/types/service';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
+import { useQuery } from '@tanstack/react-query';
+import { differenceInSeconds, format, parseISO } from 'date-fns';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   Calendar,
@@ -19,7 +18,9 @@ import {
   Trash2,
   User,
 } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   ScrollView,
   Share,
@@ -31,23 +32,50 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function BookingDetailScreen() {
   const { id } = useLocalSearchParams();
-  const booking = MOCK_BOOKINGS.find((b) => b.id === Number(id));
+  const [timeLeft, setTimeLeft] = useState<string>('');
 
-  if (!booking) {
-    return (
-      <SafeAreaView className="flex-1 bg-white justify-center items-center">
-        <Text>Không tìm thấy booking</Text>
-      </SafeAreaView>
-    );
-  }
+  const { data: booking, isLoading } = useQuery({
+    queryKey: ['booking', id],
+    queryFn: () => ServiceService.getBookingById(Number(id)),
+    select: (res) => res.data,
+    enabled: !!id,
+  });
 
-  const payment = MOCK_PAYMENTS.find((p) => p.booking_id === booking.id);
+  useEffect(() => {
+    if (booking?.status !== BookingStatus.PENDING || !booking?.expiresAt)
+      return;
+
+    const calculateTime = () => {
+      const now = new Date();
+      const expiry = parseISO(booking?.expiresAt);
+      const diff = differenceInSeconds(expiry, now);
+
+      if (diff <= 0) {
+        setTimeLeft('Hết hạn');
+        return;
+      }
+
+      const m = Math.floor(diff / 60);
+      const s = diff % 60;
+      setTimeLeft(`${m}:${s < 10 ? '0' : ''}${s}`);
+    };
+
+    calculateTime();
+    const timer = setInterval(calculateTime, 1000);
+    return () => clearInterval(timer);
+  }, [booking]);
+
+  if (isLoading) return <ActivityIndicator className="flex-1" />;
+  if (!booking) return null;
+
   const statusLabel = getBookingStatusLabel(booking.status);
   const statusColor = getBookingStatusColor(booking.status);
 
-  const formattedDate = format(new Date(booking.date), 'dd/MM/yyyy', {
-    locale: vi,
-  });
+  const formattedDate = format(parseISO(booking.bookingDate), 'dd/MM/yyyy');
+  const formattedCreatedAt = format(
+    parseISO(booking.createdAt),
+    'HH:mm, dd/MM/yyyy'
+  );
 
   const handleDownloadPDF = () => {
     Alert.alert('Thông báo', 'Tính năng tải PDF đang được phát triển');
@@ -55,8 +83,14 @@ export default function BookingDetailScreen() {
 
   const handleShare = async () => {
     try {
+      const timeSlots = booking?.timestamps
+        .map(
+          (t: { startTime: string; endTime: string }) =>
+            `${t.startTime}-${t.endTime}`
+        )
+        .join(', ');
       await Share.share({
-        message: `Booking #${booking.code}\nDịch vụ: ${booking.service_name}\nNgày: ${formattedDate}\nGiờ: ${booking.timestamps.start} - ${booking.timestamps.end}`,
+        message: `Booking #${booking?.code}\nDịch vụ: ${booking?.service?.name}\nNgày: ${formattedDate}\nGiờ: ${timeSlots}`,
       });
     } catch (error) {
       console.error(error);
@@ -85,6 +119,16 @@ export default function BookingDetailScreen() {
     <SafeAreaView className="flex-1 bg-gray-50">
       <CustomHeader title="Chi tiết lịch đặt" />
 
+      {booking.status === BookingStatus.PENDING && booking.expiresAt && (
+        <View className="bg-orange-50 px-6 py-3 flex-row items-center border border-orange-100 rounded-xl">
+          <Clock size={16} color="#c2410c" />
+          <Text className="text-orange-700 text-sm font-medium ml-2">
+            Thanh toán trong <Text className="font-bold">{timeLeft}</Text> để
+            giữ chỗ
+          </Text>
+        </View>
+      )}
+
       <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
         <View className="p-4 gap-y-4">
           <View
@@ -106,8 +150,7 @@ export default function BookingDetailScreen() {
               {booking.code}
             </Text>
             <Text className="text-xs text-gray-400 mt-1 font-medium italic">
-              Đặt lúc:{' '}
-              {format(new Date(booking.created_at), 'HH:mm - dd/MM/yyyy')}
+              Đặt lúc: {formattedCreatedAt}
             </Text>
           </View>
 
@@ -125,19 +168,13 @@ export default function BookingDetailScreen() {
               <View className="flex-row justify-between">
                 <Text className="text-sm text-gray-500">Họ tên</Text>
                 <Text className="text-sm font-bold text-gray-800">
-                  {booking.customer_name}
+                  {booking.resident.fullName}
                 </Text>
               </View>
               <View className="flex-row justify-between">
                 <Text className="text-sm text-gray-500">Điện thoại</Text>
                 <Text className="text-sm font-bold text-gray-800">
-                  {booking.customer_phone}
-                </Text>
-              </View>
-              <View className="flex-row justify-between">
-                <Text className="text-sm text-gray-500">Căn hộ</Text>
-                <Text className="text-sm font-bold text-gray-800">
-                  {booking.apartment}
+                  {booking.resident.phoneNumber}
                 </Text>
               </View>
             </View>
@@ -157,7 +194,7 @@ export default function BookingDetailScreen() {
               <View className="flex-row justify-between items-start">
                 <Text className="text-sm text-gray-500">Dịch vụ</Text>
                 <Text className="text-sm font-bold text-[#244B35] text-right flex-1 ml-4">
-                  {booking.service_name}
+                  {booking.service.name}
                 </Text>
               </View>
 
@@ -173,17 +210,29 @@ export default function BookingDetailScreen() {
 
               <View className="flex-row justify-between">
                 <Text className="text-sm text-gray-500">Thời gian</Text>
-                <View className="bg-[#244B35] px-2 py-1 rounded-md flex-row items-center">
-                  <Clock size={12} color="white" />
-                  <Text className="text-xs font-bold text-white ml-1">
-                    {booking.timestamps.start} - {booking.timestamps.end}
-                  </Text>
+                <View className="flex-row flex-wrap gap-2">
+                  {booking.timestamps.map(
+                    (
+                      slot: { startTime: string; endTime: string },
+                      index: number
+                    ) => (
+                      <View
+                        key={index}
+                        className="bg-[#244B35] px-3 py-1.5 rounded-lg flex-row items-center"
+                      >
+                        <Clock size={12} color="white" />
+                        <Text className="text-xs font-bold text-white ml-1">
+                          {slot.startTime} - {slot.endTime}
+                        </Text>
+                      </View>
+                    )
+                  )}
                 </View>
               </View>
             </View>
           </View>
 
-          {payment && (
+          {/* {booking.status === BookingStatus.PAID && (
             <View className="bg-white rounded-2xl p-4 shadow-sm">
               <View className="flex-row items-center mb-4">
                 <View className="bg-[#244B35]/10 p-2 rounded-lg mr-3">
@@ -210,7 +259,7 @@ export default function BookingDetailScreen() {
                 </View>
               </View>
             </View>
-          )}
+          )} */}
 
           <View className="bg-[#244B35] rounded-2xl p-5 shadow-md flex-row justify-between items-center mb-4">
             <View>
@@ -218,7 +267,7 @@ export default function BookingDetailScreen() {
                 Tổng thanh toán
               </Text>
               <Text className="text-white text-2xl font-black mt-1">
-                {booking.total.toLocaleString('vi-VN')} đ
+                {booking.totalPrice.toLocaleString('vi-VN')} đ
               </Text>
             </View>
             <View className="bg-white/20 p-2 rounded-full">
@@ -254,12 +303,8 @@ export default function BookingDetailScreen() {
                     router.push({
                       pathname: '/service/payment/[id]',
                       params: {
-                        id: booking.service_id,
-                        date: booking.date,
-                        slots: JSON.stringify([
-                          `${booking.timestamps.start}-${booking.timestamps.end}`,
-                        ]),
-                        total: booking.total,
+                        id: booking.id,
+                        bookingData: JSON.stringify(booking),
                       },
                     } as any)
                   }

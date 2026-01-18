@@ -4,7 +4,7 @@ import {
   getBookingStatusColor,
   getBookingStatusLabel,
 } from '@/types/service';
-import { format } from 'date-fns';
+import { differenceInSeconds, format, parseISO } from 'date-fns';
 import { router } from 'expo-router';
 import { Clock, CreditCard } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
@@ -21,37 +21,34 @@ export default function BookingCard({ booking, onPress }: BookingCardProps) {
   const isPending = booking.status === BookingStatus.PENDING;
   const [timeLeft, setTimeLeft] = useState('');
 
-  const formattedDate = format(new Date(booking.date), 'dd/MM/yyyy');
+  const formattedDate = format(parseISO(booking.date), 'dd/MM/yyyy');
   const formattedCreatedAt = format(
-    new Date(booking.created_at),
+    parseISO(booking.created_at),
     'HH:mm, dd/MM/yyyy'
   );
 
   useEffect(() => {
-    if (booking.status !== BookingStatus.PENDING) return;
+    if (!isPending || !booking?.expiresAt) return;
 
     const calculateTime = () => {
-      const now = new Date().getTime();
-      const expiryTime =
-        new Date(booking.created_at).getTime() + 15 * 60 * 1000;
-      const diff = expiryTime - now;
+      const now = new Date();
+      const expiry = parseISO(booking.expiresAt!);
+      const diff = differenceInSeconds(expiry, now);
 
       if (diff <= 0) {
         setTimeLeft('Hết hạn');
         return;
       }
 
-      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const s = Math.floor((diff % (1000 * 60)) / 1000);
-
+      const m = Math.floor(diff / 60);
+      const s = diff % 60;
       setTimeLeft(`${m}:${s < 10 ? '0' : ''}${s}`);
     };
 
     calculateTime();
-
     const timer = setInterval(calculateTime, 1000);
     return () => clearInterval(timer);
-  }, [booking.created_at, booking.status]);
+  }, [booking.expiresAt, isPending]);
 
   return (
     <TouchableOpacity
@@ -92,9 +89,21 @@ export default function BookingCard({ booking, onPress }: BookingCardProps) {
         Dịch vụ: {booking.service_name}
       </Text>
       <Text className="text-sm text-gray-700 mb-1">
-        Thời gian: {booking.timestamps.start} - {booking.timestamps.end},{' '}
-        {formattedDate}
+        Ngày:{' '}
+        <Text className="font-semibold text-gray-800">{formattedDate}</Text>
       </Text>
+
+      <View className="flex-row flex-wrap gap-1.5 mt-1">
+        {booking.timestamps.map(
+          (slot: { startTime: string; endTime: string }, index: number) => (
+            <View key={index} className="bg-gray-100 px-2 py-0.5 rounded">
+              <Text className="text-[10px] font-medium text-gray-700">
+                {slot.startTime} - {slot.endTime}
+              </Text>
+            </View>
+          )
+        )}
+      </View>
 
       <View className="border-t border-gray-50 mt-1 pt-3 flex-row justify-between items-center">
         <View>
@@ -114,12 +123,7 @@ export default function BookingCard({ booking, onPress }: BookingCardProps) {
               router.push({
                 pathname: '/service/payment/[id]',
                 params: {
-                  id: booking.service_id,
-                  date: booking.date,
-                  slots: JSON.stringify([
-                    `${booking.timestamps.start}-${booking.timestamps.end}`,
-                  ]),
-                  total: booking.total,
+                  id: booking.id,
                 },
               } as any);
             }}

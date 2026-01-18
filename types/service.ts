@@ -54,15 +54,15 @@ export interface Booking {
   service_name?: string;
   date: string; // ISO date
   timestamps: {
-    start: string; // "15:00"
-    end: string; // "17:00"
-  };
+    startTime: string;
+    endTime: string;
+  }[];
   unit_price: number;
   total: number;
   created_at: string;
   status: BookingStatus;
   paid_at?: string;
-  apartment?: string; // Client-side
+  expiresAt?: string | null;
 }
 
 export interface Payment {
@@ -74,7 +74,6 @@ export interface Payment {
   paid_at?: string;
 }
 
-// Helper functions
 export function getBookingStatusLabel(status: BookingStatus): string {
   const labels: Record<BookingStatus, string> = {
     [BookingStatus.PAID]: 'Đã thanh toán',
@@ -101,31 +100,4 @@ export function getPaymentMethodLabel(method: PaymentMethod): string {
     [PaymentMethod.VNPAY]: 'VNPay',
   };
   return labels[method];
-}
-
-// Generate time slots
-export function generateTimeSlots(
-  startHour: string,
-  endHour: string,
-  unit: number
-): string[] {
-  const slots: string[] = [];
-  const [startH, startM] = startHour.split(':').map(Number);
-  const [endH, endM] = endHour.split(':').map(Number);
-
-  let currentMinutes = startH * 60 + startM;
-  const endMinutes = endH * 60 + endM;
-
-  while (currentMinutes + unit <= endMinutes) {
-    const hours = Math.floor(currentMinutes / 60);
-    const minutes = currentMinutes % 60;
-    slots.push(
-      `${hours.toString().padStart(2, '0')}:${minutes
-        .toString()
-        .padStart(2, '0')}`
-    );
-    currentMinutes += unit;
-  }
-
-  return slots;
 }
