@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
+  RefreshControl,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -45,7 +45,11 @@ const TABS: Tab[] = [
 export default function MyBookingsScreen() {
   const [activeTab, setActiveTab] = useState<TabKey>('pending');
 
-  const { data: bookings, isLoading } = useQuery({
+  const {
+    data: bookings,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ['bookings', 'mine'],
     queryFn: () => ServiceService.getMyBookings(),
     select: (res) => res.data,
@@ -97,10 +101,11 @@ export default function MyBookingsScreen() {
         className="flex-1"
         showsVerticalScrollIndicator={false}
         contentContainerClassName="p-5"
+        refreshControl={
+          <RefreshControl refreshing={isLoading} onRefresh={refetch} />
+        }
       >
-        {isLoading ? (
-          <ActivityIndicator color="#244B35" className="py-20" />
-        ) : filteredBookings.length === 0 ? (
+        {filteredBookings.length === 0 ? (
           <View className="py-20 items-center">
             <Text className="text-gray-500 text-center">
               Không có booking nào trong mục này

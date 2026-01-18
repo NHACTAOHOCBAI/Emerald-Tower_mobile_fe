@@ -6,7 +6,6 @@ import { router } from 'expo-router';
 import { History, Search } from 'lucide-react-native';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
   RefreshControl,
   ScrollView,
   Text,
@@ -73,43 +72,39 @@ export default function ServiceScreen() {
           <RefreshControl refreshing={isLoading} onRefresh={refetch} />
         }
       >
-        {isLoading ? (
-          <ActivityIndicator className="flex-1" />
-        ) : (
-          categories.map((category) => {
-            const servicesInCategory = filteredServices.filter(
-              (s) => s.category === category
-            );
+        {categories.map((category) => {
+          const servicesInCategory = filteredServices.filter(
+            (s) => s.category === category
+          );
 
-            if (servicesInCategory.length === 0) return null;
+          if (servicesInCategory.length === 0) return null;
 
-            return (
-              <View key={category} className="px-5 py-4">
-                <View className="flex-row items-center mb-3">
-                  <View className="w-1 h-5 bg-[#244B35] rounded mr-2" />
-                  <Text className="text-base font-bold text-gray-800">
-                    {category}
-                  </Text>
-                </View>
-
-                <View className="flex-row flex-wrap justify-between">
-                  {servicesInCategory.map((service) => (
-                    <ServiceCard
-                      key={service.id}
-                      service={service}
-                      onPress={() =>
-                        router.push({
-                          pathname: '/service/[id]',
-                          params: { id: service.id },
-                        } as any)
-                      }
-                    />
-                  ))}
-                </View>
+          return (
+            <View key={category} className="px-5 py-4">
+              <View className="flex-row items-center mb-3">
+                <View className="w-1 h-5 bg-[#244B35] rounded mr-2" />
+                <Text className="text-base font-bold text-gray-800">
+                  {category}
+                </Text>
               </View>
-            );
-          })
-        )}
+
+              <View className="flex-row flex-wrap justify-between">
+                {servicesInCategory.map((service) => (
+                  <ServiceCard
+                    key={service.id}
+                    service={service}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/service/[id]',
+                        params: { id: service.id },
+                      } as any)
+                    }
+                  />
+                ))}
+              </View>
+            </View>
+          );
+        })}
       </ScrollView>
     </SafeAreaView>
   );
