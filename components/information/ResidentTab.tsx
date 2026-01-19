@@ -165,10 +165,10 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
           detailAddress: formData.detailAddress,
           image: selectedImage
             ? {
-                uri: selectedImage.uri,
-                fileName: selectedImage.fileName,
-                mimeType: selectedImage.mimeType,
-              }
+              uri: selectedImage.uri,
+              fileName: selectedImage.fileName,
+              mimeType: selectedImage.mimeType,
+            }
             : undefined,
         },
       },
@@ -249,15 +249,13 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
           <TouchableOpacity
             disabled={updateMutation.isPending}
             onPress={() => (isEditing ? handleSubmit(onSubmit)() : setIsEditing(true))}
-            className={`px-4 py-1.5 rounded-full border flex-row items-center gap-2 ${
-              isEditing ? "bg-[#E09B6B] border-[#E09B6B]" : "border-[#E09B6B]"
-            }`}
+            className={`px-4 py-1.5 rounded-full border flex-row items-center gap-2 ${isEditing ? "bg-[#E09B6B] border-[#E09B6B]" : "border-[#E09B6B]"
+              }`}
           >
             {updateMutation.isPending && <ActivityIndicator size="small" color="white" />}
             <Text
-              className={`text-xs font-bold ${
-                isEditing ? "text-white" : "text-[#E09B6B]"
-              }`}
+              className={`text-xs font-bold ${isEditing ? "text-white" : "text-[#E09B6B]"
+                }`}
             >
               {isEditing ? "Lưu thay đổi" : "✎ Chỉnh sửa"}
             </Text>

@@ -1,5 +1,5 @@
 import { CustomHeader } from "@/components/ui/CustomHeader";
-import BaseInput from "@/components/ui/BaseInput"; // đường dẫn đúng theo project bạn
+import BaseInput from "@/components/ui/BaseInput";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Alert, Text, TouchableOpacity, View } from "react-native";
