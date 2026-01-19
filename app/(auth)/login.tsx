@@ -55,7 +55,7 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <CustomHeader title="Đăng nhập" showBackButton={false} />
+      <CustomHeader title="Đăng nhập" showBackButton={false} showRefresh={false}/>
 
       <View className="px-5 py-4 gap-4">
         <View>
