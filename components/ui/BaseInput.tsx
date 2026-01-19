@@ -89,7 +89,7 @@ export default function BaseInput({
           />
           {isPassword ? (
             <Pressable onPress={() => setShowPassword(!showPassword)}>
-              {showPassword ? <EyeOff color="#6b7280" /> : <Eye color="#6b7280" />}
+              {showPassword ? <Eye color="#6b7280" /> : <EyeOff color="#6b7280" />}
             </Pressable>
           ) : (
             rightIcon

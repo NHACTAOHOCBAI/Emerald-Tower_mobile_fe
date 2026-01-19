@@ -10,3 +10,8 @@ export const getProfile = async () => {
   const response = await api.get("/auth/profile");
   return response.data.data as AuthUser;
 };
+
+export const changePassword = async (payload: { oldPassword: string; newPassword: string }) => {
+  const response = await api.post("/auth/change-password", payload);
+  return response.data.data;
+};
