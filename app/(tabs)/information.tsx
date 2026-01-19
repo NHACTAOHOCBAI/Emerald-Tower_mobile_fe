@@ -1,55 +1,21 @@
 import { ApartmentTab } from "@/components/information/ApartmentTab";
 import { ResidentTab } from "@/components/information/ResidentTab";
-import MyButton from "@/components/ui/Button";
 import { CustomHeader } from "@/components/ui/CustomHeader";
-import { useAuth } from "@/contexts/AuthContext";
 import { useResidentProfile } from "@/hooks/useResident";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ChangePasswordModal } from "@/components/information/ChangePasswordModal";
-import { changePassword } from "@/services/auth";
-import { LogOut } from "lucide-react-native";
 
 export default function InformationScreen() {
-  const { logout } = useAuth();
   const [activeTab, setActiveTab] = useState<"resident" | "apartment">("resident");
 
   const { data: residentData, isLoading, isError } = useResidentProfile();
-  const [pwdOpen, setPwdOpen] = useState(false);
-
-  const submitChangePassword = async (payload: { oldPassword: string; newPassword: string }) => {
-    try {
-      await changePassword(payload);
-      Alert.alert("Thành công", "Đổi mật khẩu thành công.");
-      // logout();
-    } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Đổi mật khẩu thất bại. Vui lòng thử lại.";
-      Alert.alert("Lỗi", msg);
-      throw err;
-    }
-  };
-
-  const handleLogout = () => {
-    Alert.alert("Đăng xuất", "Bạn chắc chắn muốn đăng xuất?", [
-      { text: "Hủy", style: "cancel" },
-      {
-        text: "Đăng xuất",
-        style: "destructive",
-        onPress: () => void logout(),
-      },
-    ]);
-  };
 
   return (
     <SafeAreaView className="flex-1 bg-[#F3F4F6]">
@@ -104,34 +70,9 @@ export default function InformationScreen() {
             <View style={{ display: activeTab === "apartment" ? "flex" : "none" }}>
               <ApartmentTab data={residentData.apartments || []} />
             </View>
-            <View className="mt-6 pb-6 flex-row gap-4 justify-center">
-              <MyButton
-                onPress={() => setPwdOpen(true)}
-                className="py-3"
-                textClassName="text-white font-semibold"
-              >
-                Đổi mật khẩu
-              </MyButton>
-              <MyButton
-                onPress={handleLogout}
-                className="py-3"
-              >
-                <View className="flex-row items-center gap-2">
-                  <Text className="text-white font-semibold">
-                    Đăng xuất
-                  </Text>
-                  <LogOut size={18} color="white" />
-                </View>
-              </MyButton>
-            </View>
           </>
         )}
       </ScrollView>
-      <ChangePasswordModal
-        open={pwdOpen}
-        onClose={() => setPwdOpen(false)}
-        onSubmit={submitChangePassword}
-      />
     </SafeAreaView>
   );
 }

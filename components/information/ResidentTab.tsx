@@ -6,6 +6,7 @@ import {
   Camera,
   Home,
   IdCard,
+  LogOut,
   MapPin,
   Phone,
   User,
@@ -43,12 +44,18 @@ import {
   parseDateString,
   residentSchema,
 } from "./ResidentHelpers";
+import { ChangePasswordModal } from "./ChangePasswordModal";
+import MyButton from "../ui/Button";
+import { useAuth } from "@/contexts/AuthContext";
+import { changePassword } from "@/services/auth";
 
 interface ResidentTabProps {
   data: ResidentResponse;
 }
 
 export const ResidentTab = ({ data }: ResidentTabProps) => {
+  const { logout } = useAuth();
+
   const [isEditing, setIsEditing] = useState(false);
   const [selectedImage, setSelectedImage] = useState<ImagePicker.ImagePickerAsset | null>(
     null,
@@ -63,7 +70,33 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
   const wardOptions = wards?.map((w) => ({ label: w.name, value: w.name })) || [];
 
   const updateMutation = useUpdateResident();
+  const [pwdOpen, setPwdOpen] = useState(false);
 
+  const submitChangePassword = async (payload: { oldPassword: string; newPassword: string }) => {
+    try {
+      await changePassword(payload);
+      Alert.alert("Thành công", "Đổi mật khẩu thành công.");
+      // logout();
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Đổi mật khẩu thất bại. Vui lòng thử lại.";
+      Alert.alert("Lỗi", msg);
+      throw err;
+    }
+  };
+
+  const handleLogout = () => {
+    Alert.alert("Đăng xuất", "Bạn chắc chắn muốn đăng xuất?", [
+      { text: "Hủy", style: "cancel" },
+      {
+        text: "Đăng xuất",
+        style: "destructive",
+        onPress: () => void logout(),
+      },
+    ]);
+  };
   const { control, handleSubmit, reset, setValue, watch } = useForm({
     resolver: yupResolver(residentSchema),
     defaultValues: {
@@ -465,6 +498,31 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
           )}
         </View>
       </View>
+      <View className="mt-6 pb-6 flex-row gap-4 justify-center">
+        <MyButton
+          onPress={() => setPwdOpen(true)}
+          className="py-3"
+          textClassName="text-white font-semibold"
+        >
+          Đổi mật khẩu
+        </MyButton>
+        <MyButton
+          onPress={handleLogout}
+          className="py-3"
+        >
+          <View className="flex-row items-center gap-2">
+            <Text className="text-white font-semibold">
+              Đăng xuất
+            </Text>
+            <LogOut size={18} color="white" />
+          </View>
+        </MyButton>
+      </View>
+      <ChangePasswordModal
+        open={pwdOpen}
+        onClose={() => setPwdOpen(false)}
+        onSubmit={submitChangePassword}
+      />
     </View>
   );
 };
