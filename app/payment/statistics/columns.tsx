@@ -4,7 +4,7 @@ import { Text } from "react-native";
 
 const statisticsColumns: TableColumn<StatisticsItem>[] = [
   {
-    header: "THÁNG",
+    header: "Tháng",
     width: "w-[18%]",
     align: "center",
     accessor: (item) => (
@@ -12,22 +12,22 @@ const statisticsColumns: TableColumn<StatisticsItem>[] = [
     ),
   },
   {
-    header: "ĐIỆN",
+    header: "Điện",
     align: "center",
     accessor: (item) => <Text className="text-[11px] text-black">{item.elec}</Text>,
   },
   {
-    header: "NƯỚC",
+    header: "Nước",
     align: "center",
     accessor: (item) => <Text className="text-[11px] text-black">{item.water}</Text>,
   },
   {
-    header: "PHÍ QL",
+    header: "Phí QL",
     align: "center",
     accessor: (item) => <Text className="text-[11px] text-black">{item.service}</Text>,
   },
   {
-    header: "TỔNG",
+    header: "Tổng",
     width: "w-[22%]",
     align: "center",
     accessor: (item) => (
