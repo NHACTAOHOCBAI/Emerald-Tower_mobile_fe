@@ -14,6 +14,7 @@ interface CustomHeaderProps {
   textColor?: string;
   iconColor?: string;
   showBorder?: boolean;
+  showRefresh?: boolean;
 }
 
 export const CustomHeader = ({
@@ -26,6 +27,7 @@ export const CustomHeader = ({
   textColor = "#1F2937",
   iconColor = "#1F2937",
   showBorder = true,
+  showRefresh = true,
 }: CustomHeaderProps) => {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -83,7 +85,7 @@ export const CustomHeader = ({
         <View className="w-10 items-end">
           {rightComponent ? (
             rightComponent
-          ) : (
+          ) : showRefresh ? (
             <TouchableOpacity
               onPress={handleRefresh}
               disabled={isFetching}
@@ -98,6 +100,8 @@ export const CustomHeader = ({
                 }}
               />
             </TouchableOpacity>
+          ) : (
+            <View className="w-6 h-6" />
           )}
         </View>
       </View>
