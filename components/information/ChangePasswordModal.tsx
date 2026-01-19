@@ -64,8 +64,14 @@ function PasswordField({
 
         <TouchableOpacity
           onPress={() => {
+            const wasFocused = !!ref.current?.isFocused?.();
+            if (wasFocused) ref.current?.blur();
+
             onToggle();
-            requestAnimationFrame(() => ref.current?.focus());
+
+            if (wasFocused) {
+              setTimeout(() => ref.current?.focus(), 30);
+            }
           }}
           activeOpacity={0.7}
           className="absolute right-3 top-0 h-11 justify-center"
@@ -75,6 +81,7 @@ function PasswordField({
         >
           {shown ? <Eye size={20} color="#6B7280" /> : <EyeOff size={20} color="#6B7280" />}
         </TouchableOpacity>
+
       </View>
 
       {!!error && <Text className="text-xs text-red-500 mt-1">{error}</Text>}
@@ -163,7 +170,6 @@ export function ChangePasswordModal({ open, onClose, onSubmit }: Props) {
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
       <View className="flex-1 bg-black/45 justify-center px-4">
-        {/* NỀN: chỉ bắt tap ngoài card */}
         <Pressable
           style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
           onPress={Keyboard.dismiss}
@@ -232,9 +238,8 @@ export function ChangePasswordModal({ open, onClose, onSubmit }: Props) {
                 <TouchableOpacity
                   disabled={submitting}
                   onPress={handleSubmit}
-                  className={`flex-1 h-11 rounded-xl items-center justify-center ${
-                    submitting ? "bg-main/70" : "bg-main"
-                  }`}
+                  className={`flex-1 h-11 rounded-xl items-center justify-center ${submitting ? "bg-main/70" : "bg-main"
+                    }`}
                   activeOpacity={0.85}
                 >
                   {submitting ? (
