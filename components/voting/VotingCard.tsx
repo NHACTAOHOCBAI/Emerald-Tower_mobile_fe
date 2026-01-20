@@ -31,7 +31,7 @@ export default function VotingCard({
     const statusConfig = {
       ONGOING: { text: getRemainingDays(), bg: 'bg-orange-500' },
       UPCOMING: { text: 'Sắp diễn ra', bg: 'bg-amber-400' },
-      CLOSED: { text: 'Đã đóng', bg: 'bg-red-500' },
+      ENDED: { text: 'Đã đóng', bg: 'bg-red-500' },
     };
 
     const config = statusConfig[voting.status || 'ONGOING'];
@@ -46,7 +46,7 @@ export default function VotingCard({
   const renderActionButton = () => {
     const status = voting.status;
 
-    if (status === 'CLOSED') {
+    if (status === 'ENDED') {
       return (
         <TouchableOpacity
           className="bg-[#244B35] px-6 py-2 rounded-lg"
