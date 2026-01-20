@@ -34,6 +34,7 @@ export interface ResidentOption {
 
 export interface VoteResult {
   voting_id: number;
+  title: string;
   voted_area: number;
   total: number;
   options: {

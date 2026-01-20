@@ -62,11 +62,12 @@ const mapVoting = (raw: any): Voting => {
 const mapResult = (raw: any): VoteResult => {
   return {
     voting_id: raw.votingId,
+    title: raw.votingTitle,
     voted_area: raw.votedArea,
     total: raw.totalEligibleArea,
     options: (raw.results || []).map((option: any): any => ({
-      id: option.id,
-      name: option.name,
+      id: option.optionId,
+      name: option.optionName,
       vote_count: option.voteCount,
       total_area: option.totalArea,
       percentage: option.percentage,
