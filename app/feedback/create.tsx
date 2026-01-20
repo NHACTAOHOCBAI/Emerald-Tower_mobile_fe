@@ -86,7 +86,10 @@ export default function CreateFeedbackScreen() {
     onError: (error: any) => {
       Alert.alert(
         'Lỗi',
-        error?.data?.data?.message || 'Không thể gửi phản ánh, vui lòng thử lại'
+        error?.data?.data?.message ||
+          error?.data?.message ||
+          error?.message ||
+          'Không thể gửi phản ánh, vui lòng thử lại'
       );
     },
   });
