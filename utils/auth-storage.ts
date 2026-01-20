@@ -2,23 +2,22 @@ import * as SecureStore from "expo-secure-store";
 import type { AuthUser } from "@/types/auth";
 
 const ACCESS_TOKEN_KEY = "access_token";
-const REFRESH_TOKEN_KEY = "refresh_token";
 const USER_KEY = "auth_user";
 
-export const getAccessToken = async () => SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+/** ===== Access token ===== */
+export const getAccessToken = async () => {
+  return await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+};
 
-export const getRefreshToken = async () => SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
-
-export const setTokens = async (accessToken: string, refreshToken: string) => {
+export const setAccessToken = async (accessToken: string) => {
   await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
-  await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
 };
 
 export const clearTokens = async () => {
   await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
-  await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
 };
 
+/** ===== User ===== */
 export const getStoredUser = async () => {
   const raw = await SecureStore.getItemAsync(USER_KEY);
   if (!raw) return null;
@@ -38,6 +37,29 @@ export const clearStoredUser = async () => {
 };
 
 export const clearAuthStorage = async () => {
-  await clearTokens();
-  await clearStoredUser();
+  await Promise.all([clearTokens(), clearStoredUser()]);
+};
+
+/** ===== JWT expire check (RN-safe) ===== */
+const base64UrlDecode = (input: string) => {
+  // base64url -> base64
+  let base64 = input.replace(/-/g, "+").replace(/_/g, "/");
+  // padding
+  while (base64.length % 4) base64 += "=";
+
+  // RN: use global Buffer if available (expo thường có)
+  // Nếu TS báo lỗi Buffer, cài: npm i buffer và thêm polyfill ở entry.
+  const json = Buffer.from(base64, "base64").toString("utf8");
+  return json;
+};
+
+export const isJwtExpired = (token: string) => {
+  try {
+    const payloadStr = base64UrlDecode(token.split(".")[1]);
+    const payload = JSON.parse(payloadStr);
+    const expMs = payload.exp * 1000;
+    return Date.now() >= expMs - 5000; // 5s buffer
+  } catch {
+    return true;
+  }
 };
