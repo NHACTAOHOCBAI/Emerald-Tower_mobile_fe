@@ -1,13 +1,13 @@
 import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { AuthUser } from "@/types/auth";
-import { getProfile, login as loginRequest } from "@/services/auth";
+import { getProfile, login as loginRequest, logout as logoutRequest } from "@/services/auth";
 import {
   clearAuthStorage,
   getAccessToken,
   getStoredUser,
   setStoredUser,
-  setTokens,
+  setAccessToken,
 } from "@/utils/auth-storage";
 
 type AuthContextValue = {
@@ -27,26 +27,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const boot = async () => {
-      const token = await getAccessToken();
-      const storedUser = await getStoredUser();
-
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
-
-      if (storedUser) {
-        setUser(storedUser);
-        setIsLoading(false);
-        return;
-      }
-
       try {
+        const token = await getAccessToken();
+        const storedUser = await getStoredUser();
+
+        if (storedUser) setUser(storedUser);
+
+        if (!token) {
+          setUser(null);
+          return;
+        }
+
         const profile = await getProfile();
         await setStoredUser(profile);
         setUser(profile);
       } catch {
         await clearAuthStorage();
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -57,23 +54,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     const data = await loginRequest(email, password);
-    const { accessToken, refreshToken, ...profile } = data;
-    await setTokens(accessToken, refreshToken);
-    try {
-      const freshProfile = await getProfile();
-      await setStoredUser(freshProfile);
-      setUser(freshProfile);
-      return freshProfile;
-    } catch {
-      await setStoredUser(profile);
-      setUser(profile);
-      return profile;
-    }
+    const { accessToken, ...profile } = data;
+    await setAccessToken(accessToken);
+    await setStoredUser(profile);
+    setUser(profile);
+
+    return profile;
   };
 
   const logout = async () => {
-    await clearAuthStorage();
-    setUser(null);
+    try {
+      await logoutRequest();
+    }
+    finally {
+      await clearAuthStorage();
+      setUser(null);
+    }
   };
 
   const refreshProfile = async () => {

@@ -3,15 +3,15 @@ import { router } from "expo-router";
 import {
   clearAuthStorage,
   getAccessToken,
-  getRefreshToken,
-  setTokens,
+  setAccessToken,
 } from "@/utils/auth-storage";
 
-const baseURL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:8080/api";
+const baseURL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:4000/api";
 
 export const api = axios.create({
   baseURL,
   timeout: 10000,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
@@ -20,6 +20,7 @@ export const api = axios.create({
 const refreshClient = axios.create({
   baseURL,
   timeout: 10000,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
@@ -33,88 +34,77 @@ const resolveRefreshQueue = (token: string | null) => {
   refreshQueue = [];
 };
 
+const forceLogout = async () => {
+  await clearAuthStorage();
+  router.replace("/(auth)/login");
+};
+
 api.interceptors.request.use(async (config) => {
   const token = await getAccessToken();
   if (token) {
     config.headers = config.headers || {};
-    config.headers.Authorization = `Bearer ${token}`;
+    (config.headers as any).Authorization = `Bearer ${token}`;
   }
   return config;
 });
-
 api.interceptors.response.use(
-  (response) => response,
+  (res) => res,
   async (error: AxiosError) => {
-    if (!error.response) {
-      return Promise.reject(error);
-    }
+    if (!error.response) return Promise.reject(error);
 
     const status = error.response.status;
-    const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
-    const requestUrl = originalRequest?.url || "";
-    const isAuthRequest =
-      requestUrl.includes("/auth/login") || requestUrl.includes("/auth/refresh");
+    const original = error.config as AxiosRequestConfig & { _retry?: boolean };
+    const url = String(original?.url ?? "");
 
-    if (status === 401 && !originalRequest?._retry && !isAuthRequest) {
-      const refreshToken = await getRefreshToken();
-      if (!refreshToken) {
-        await clearAuthStorage();
-        router.replace("/(auth)/login");
-        return Promise.reject(error);
-      }
+    // Không refresh cho chính auth endpoints
+    if (url.includes("/auth/")) return Promise.reject(error);
 
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          refreshQueue.push((token) => {
-            if (!token) {
-              reject(error);
-              return;
-            }
-            if (originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-            }
-            resolve(api(originalRequest));
-          });
+    // Chỉ xử lý 401 và chỉ retry 1 lần
+    if (status !== 401 || original._retry) return Promise.reject(error);
+
+    // Nếu đang refresh -> đợi
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        refreshQueue.push((token) => {
+          if (!token) return reject(error);
+          original.headers = original.headers ?? {};
+          (original.headers as any).Authorization = `Bearer ${token}`;
+          resolve(api(original));
         });
-      }
-
-      originalRequest._retry = true;
-      isRefreshing = true;
-
-      try {
-        const refreshResponse = await refreshClient.post(
-          "/auth/refresh",
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${refreshToken}`,
-            },
-          },
-        );
-
-        const { accessToken, refreshToken: newRefreshToken } = refreshResponse.data.data as {
-          accessToken: string;
-          refreshToken: string;
-        };
-
-        await setTokens(accessToken, newRefreshToken);
-        api.defaults.headers.Authorization = `Bearer ${accessToken}`;
-        resolveRefreshQueue(accessToken);
-
-        if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-        }
-        return api(originalRequest);
-      } catch (refreshError) {
-        resolveRefreshQueue(null);
-        await clearAuthStorage();
-        router.replace("/(auth)/login");
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
-      }
+      });
     }
 
-    return Promise.reject(error);
+    original._retry = true;
+    isRefreshing = true;
+
+    try {
+      // Refresh token nằm trong cookie httpOnly -> chỉ cần gọi refresh
+      const rr = await refreshClient.post("/auth/refresh");
+
+      // Backend có thể trả accessToken theo nhiều shape
+      const accessToken: string | undefined =
+        (rr.data as any)?.accessToken ?? (rr.data as any)?.data?.accessToken;
+
+      if (!accessToken) throw new Error("No accessToken in refresh response");
+
+      await setAccessToken(accessToken);
+
+      // set default header cho các request sau
+      api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+
+      // giải phóng queue
+      resolveRefreshQueue(accessToken);
+
+      // retry request cũ với token mới
+      original.headers = original.headers ?? {};
+      (original.headers as any).Authorization = `Bearer ${accessToken}`;
+      return api(original);
+    } catch (e) {
+      resolveRefreshQueue(null);
+      await forceLogout();
+      return Promise.reject(e);
+    } finally {
+      isRefreshing = false;
+    }
   },
 );

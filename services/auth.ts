@@ -15,3 +15,7 @@ export const changePassword = async (payload: { oldPassword: string; newPassword
   const response = await api.post("/auth/change-password", payload);
   return response.data.data;
 };
+
+export const logout = async () => {
+  await api.post("/auth/logout");
+};
