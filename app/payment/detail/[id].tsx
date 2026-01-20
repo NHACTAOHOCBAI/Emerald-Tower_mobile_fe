@@ -31,9 +31,9 @@ const COLORS = {
 };
 
 const ICONS = {
-  management: { icon: Building, bg: "bg-green-50", color: "#244B35" },
-  electricity: { icon: Zap, bg: "bg-yellow-50", color: "#EAB308" },
-  water: { icon: Droplets, bg: "bg-blue-50", color: "#3B82F6" },
+  management: { icon: Building, bg: "rgba(36, 75, 53, 0.12)", color: "#244B35" },
+  electricity: { icon: Zap, bg: "rgba(234, 179, 8, 0.15)", color: "#EAB308" },
+  water: { icon: Droplets, bg: "rgba(59, 130, 246, 0.15)", color: "#3B82F6" },
 };
 
 // mock data
@@ -203,7 +203,8 @@ export default function BillDetailScreen() {
             return (
               <View key={idx} className="flex-row items-center py-3">
                 <View
-                  className={`w-10 h-10 ${IconData.bg} rounded-full items-center justify-center mr-3`}
+                  style={{ backgroundColor: IconData.bg }}
+                  className="w-10 h-10 rounded-full items-center justify-center mr-3"
                 >
                   <IconData.icon size={20} color={IconData.color} />
                 </View>
