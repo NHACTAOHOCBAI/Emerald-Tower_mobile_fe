@@ -29,7 +29,7 @@ export default function VotingScreen() {
   const counts = {
     ONGOING: votings.filter((v) => v.status === 'ONGOING').length,
     UPCOMING: votings.filter((v) => v.status === 'UPCOMING').length,
-    CLOSED: votings.filter((v) => v.status === 'CLOSED').length,
+    ENDED: votings.filter((v) => v.status === 'ENDED').length,
   };
 
   const handlePressVote = (voting: Voting) => {

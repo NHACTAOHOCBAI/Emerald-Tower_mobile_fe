@@ -64,7 +64,10 @@ export default function ServiceDetailScreen() {
     },
     onError: (error: any) => {
       const errorMsg =
-        error?.response?.data?.message || 'Có lỗi xảy ra khi đặt chỗ';
+        error?.data?.data?.message ||
+        error?.data?.message ||
+        error?.message ||
+        'Có lỗi xảy ra khi đặt chỗ';
       Alert.alert('Lỗi', errorMsg);
     },
   });

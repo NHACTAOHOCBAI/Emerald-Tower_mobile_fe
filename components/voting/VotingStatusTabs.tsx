@@ -7,14 +7,14 @@ interface StatusTabsProps {
   counts?: {
     ONGOING: number;
     UPCOMING: number;
-    CLOSED: number;
+    ENDED: number;
   };
 }
 
 const TABS = [
   { key: 'ONGOING' as VotingStatus, label: 'Đang diễn ra' },
   { key: 'UPCOMING' as VotingStatus, label: 'Sắp diễn ra' },
-  { key: 'CLOSED' as VotingStatus, label: 'Đã đóng' },
+  { key: 'ENDED' as VotingStatus, label: 'Đã đóng' },
 ];
 
 export default function StatusTabs({

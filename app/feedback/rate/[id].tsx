@@ -40,7 +40,11 @@ export default function RatingScreen() {
       ]);
     },
     onError: (error: any) => {
-      const msg = error.response?.data?.message || 'Không thể gửi đánh giá';
+      const msg =
+        error?.data?.data?.message ||
+        error?.data?.message ||
+        error?.message ||
+        'Không thể gửi đánh giá';
       Alert.alert('Lỗi', Array.isArray(msg) ? msg[0] : msg);
     },
   });

@@ -61,7 +61,10 @@ export default function PaymentScreen() {
     onError: (error: any) => {
       Alert.alert(
         'Lỗi thanh toán',
-        error?.response?.data?.message || 'Không thể xác nhận thanh toán'
+        error?.data?.data?.message ||
+          error?.data?.message ||
+          error?.message ||
+          'Không thể xác nhận thanh toán'
       );
     },
   });

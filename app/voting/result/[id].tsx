@@ -32,7 +32,8 @@ export default function VotingResultScreen() {
     enabled: !!id,
   });
 
-  if (isLoading) return <ActivityIndicator className="flex-1" />;
+  if (isLoading)
+    return <ActivityIndicator className="flex-1 justify-center items-center" />;
 
   if (!result) {
     return (
@@ -57,14 +58,17 @@ export default function VotingResultScreen() {
     legendFontSize: 12,
   }));
 
-  const getPercentage = (voted_area: number) => {
-    if (result.total === 0) return 0;
-    return ((voted_area / result.total) * 100).toFixed(2);
-  };
+  const winningOption =
+    result.options.length > 0
+      ? result.options.reduce((prev: any, current: any) =>
+          (prev.total_area || 0) > (current.total_area || 0) ? prev : current
+        )
+      : null;
 
-  const winningOption = result.options.reduce((prev: any, current: any) =>
-    (prev.total_area || 0) > (current.total_area || 0) ? prev : current
-  );
+  const participationRate =
+    result.total > 0
+      ? ((result.voted_area / result.total) * 100).toFixed(2)
+      : '0.00';
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
@@ -87,37 +91,100 @@ export default function VotingResultScreen() {
 
           <View className="bg-white rounded-lg p-4 mb-4 items-center">
             <Text className="text-sm text-gray-600 mb-1">
-              Tổng số m2 bỏ phiếu
+              Tổng số m² bỏ phiếu
             </Text>
             <Text className="text-3xl font-bold text-[#244B35]">
-              {result.voted_area}
+              {result.voted_area} / {result.total}
             </Text>
-            <Text className="text-xs text-gray-500 mt-1">lượt bỏ phiếu</Text>
+            <Text className="text-xs text-gray-500 mt-1">
+              m² bỏ phiếu ({participationRate}% tỷ lệ tham gia)
+            </Text>
           </View>
 
           {totalVotes > 0 && (
+            <View className="bg-green-50 border-2 border-green-200 rounded-lg p-4 mb-4">
+              <Text className="text-sm font-semibold text-green-800 mb-1">
+                🎉 Phương án dẫn đầu
+              </Text>
+              <Text className="text-base font-bold text-green-900">
+                {winningOption.name}
+              </Text>
+              <Text className="text-sm text-green-700 mt-2">
+                Với {winningOption.vote_count} lượt bỏ phiếu ({' '}
+                {winningOption.total_area} m²,{' '}
+                {result.voted_area > 0
+                  ? (
+                      (winningOption.total_area / result.voted_area) *
+                      100
+                    ).toFixed(2)
+                  : '0.00'}
+                %)
+              </Text>
+            </View>
+          )}
+
+          {totalVotes > 0 && (
             <View className="bg-white rounded-lg p-4 mb-4 items-center">
-              <PieChart
-                data={chartData}
-                width={Dimensions.get('window').width - 60}
-                height={220}
-                chartConfig={{
-                  color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                }}
-                accessor="population"
-                backgroundColor="transparent"
-                paddingLeft="15"
-                absolute
-              />
+              <View className="flex-row items-center">
+                <View className="flex-1 mr-4">
+                  <PieChart
+                    data={chartData}
+                    width={Dimensions.get('window').width - 0.6 - 40}
+                    height={220}
+                    chartConfig={{
+                      color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                    }}
+                    accessor="population"
+                    backgroundColor="transparent"
+                    paddingLeft="15"
+                    absolute
+                    hasLegend={false}
+                  />
+                </View>
+                <View className="w-32 ">
+                  {result.options.map((option: any, index: number) => {
+                    const newPercentage =
+                      result.voted_area > 0
+                        ? (
+                            (option.total_area / result.voted_area) *
+                            100
+                          ).toFixed(2)
+                        : '0.00';
+
+                    return (
+                      <View
+                        key={option.id}
+                        className="flex-row items-center mb-2"
+                      >
+                        <View
+                          className="w-4 h-4 rounded-full mr-2"
+                          style={{
+                            backgroundColor:
+                              CHART_COLORS[index % CHART_COLORS.length],
+                          }}
+                        />
+                        <Text className="text-sm text-gray-700 flex-1">
+                          {option.name.replace('Phương án ', 'PA ')}:{' '}
+                          {option.total_area || 0} m² ({newPercentage}%)
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
             </View>
           )}
 
           <View className="bg-white rounded-lg p-4 mb-4">
             {result.options.map((option: any, index: number) => {
-              const percentage = getPercentage(
-                option.percentage || option.total_area || 0
-              );
-              const isWinner = option.id === winningOption.id && totalVotes > 0;
+              const percentage =
+                result.voted_area > 0
+                  ? ((option.total_area / result.voted_area) * 100).toFixed(2)
+                  : '0.00';
+              const isWinner =
+                winningOption &&
+                option.id === winningOption.id &&
+                totalVotes > 0;
               const progressWidth =
                 `${Math.min(Number(percentage), 100)}%` as const;
 
@@ -173,30 +240,12 @@ export default function VotingResultScreen() {
                     {option.vote_count || 0} lượt bỏ phiếu
                   </Text>
                   <Text className="text-xs text-gray-500 mt-1">
-                    {option.total_area || 0} m2 bỏ phiếu
+                    {option.total_area || 0} m² bỏ phiếu
                   </Text>
                 </View>
               );
             })}
           </View>
-
-          {totalVotes > 0 && (
-            <View className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
-              <Text className="text-sm font-semibold text-green-800 mb-1">
-                🎉 Phương án dẫn đầu
-              </Text>
-              <Text className="text-base font-bold text-green-900">
-                {winningOption.name}
-              </Text>
-              <Text className="text-sm text-green-700 mt-2">
-                Với {winningOption.vote_count} lượt bỏ phiếu ({' '}
-                {winningOption.total_area} m2,{' '}
-                {winningOption.percentage ||
-                  getPercentage(winningOption.total_area || 0)}
-                %)
-              </Text>
-            </View>
-          )}
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -1,4 +1,4 @@
-export type VotingStatus = 'ONGOING' | 'UPCOMING' | 'CLOSED';
+export type VotingStatus = 'ONGOING' | 'UPCOMING' | 'ENDED';
 
 export interface TargetBlock {
   id: number;
@@ -34,6 +34,7 @@ export interface ResidentOption {
 
 export interface VoteResult {
   voting_id: number;
+  title: string;
   voted_area: number;
   total: number;
   options: {

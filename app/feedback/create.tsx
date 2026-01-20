@@ -1,7 +1,9 @@
 import CategorySelector from '@/components/feedback/CategorySelector';
+import MyButton from '@/components/ui/Button';
 import { CustomHeader } from '@/components/ui/CustomHeader';
 import { FeedbackService } from '@/services/feedback.service';
 import { Block, IssueType } from '@/types/feedback';
+import { useMutation } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { ChevronDown, Image as ImageIcon, X } from 'lucide-react-native';
@@ -60,7 +62,39 @@ export default function CreateFeedbackScreen() {
     setImages(images.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async () => {
+  const submitFeedbackMutation = useMutation({
+    mutationFn: async () => {
+      return FeedbackService.create(
+        {
+          type: selectedType!,
+          title,
+          description,
+          blockId: selectedBlock?.id,
+          floor: selectedFloor,
+          detailLocation: detailDescription,
+        },
+        images
+      );
+    },
+
+    onSuccess: () => {
+      Alert.alert('Thành công', 'Đã gửi phản ánh thành công!', [
+        { text: 'OK', onPress: () => router.replace('/feedback') },
+      ]);
+    },
+
+    onError: (error: any) => {
+      Alert.alert(
+        'Lỗi',
+        error?.data?.data?.message ||
+          error?.data?.message ||
+          error?.message ||
+          'Không thể gửi phản ánh, vui lòng thử lại'
+      );
+    },
+  });
+
+  const handleSubmit = () => {
     if (
       !selectedType ||
       !title.trim() ||
@@ -71,28 +105,7 @@ export default function CreateFeedbackScreen() {
       return;
     }
 
-    try {
-      await FeedbackService.create(
-        {
-          type: selectedType,
-          title,
-          description,
-          blockId: selectedBlock?.id,
-          floor: selectedFloor,
-          detailLocation: detailDescription,
-        },
-        images
-      );
-
-      Alert.alert('Thành công', 'Đã gửi phản ánh thành công!', [
-        { text: 'OK', onPress: () => router.replace('/feedback') },
-      ]);
-    } catch (error: any) {
-      Alert.alert(
-        'Lỗi',
-        error.data.data.message || 'Không thể gửi phản ánh, vui lòng thử lại'
-      );
-    }
+    submitFeedbackMutation.mutate();
   };
 
   const floors = selectedBlock
@@ -179,7 +192,7 @@ export default function CreateFeedbackScreen() {
 
           <View className="mb-4">
             <Text className="text-sm font-semibold text-gray-700 mb-2">
-              Mô tả chi tiết
+              Mô tả chi tiết <Text className="text-red-500">*</Text>
             </Text>
             <TextInput
               placeholder="Mô tả chi tiết vấn đề bạn gặp phải..."
@@ -226,14 +239,14 @@ export default function CreateFeedbackScreen() {
             </View>
           </View>
 
-          <TouchableOpacity
+          <MyButton
+            className="w-full bg-[#E09B6B] py-4 rounded-lg"
+            textClassName="font-bold text-base uppercase"
             onPress={handleSubmit}
-            className="bg-[#244B35] py-4 rounded-lg mt-4"
+            isLoading={submitFeedbackMutation.isPending}
           >
-            <Text className="text-white text-center font-bold text-base">
-              Gửi phản ánh
-            </Text>
-          </TouchableOpacity>
+            Gửi phản ánh
+          </MyButton>
         </View>
       </ScrollView>
 
@@ -249,7 +262,7 @@ export default function CreateFeedbackScreen() {
                   onPress={() => selectBlock(item)}
                   className="py-3 border-b border-gray-200"
                 >
-                  <Text className="text-gray-800">{item.name}</Text>{' '}
+                  <Text className="text-gray-800">{item.name} </Text>
                 </TouchableOpacity>
               )}
             />

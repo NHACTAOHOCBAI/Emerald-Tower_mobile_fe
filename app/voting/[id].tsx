@@ -52,7 +52,9 @@ export default function VotingDetailScreen() {
     },
     onError: (error: any) => {
       const errorMsg =
-        error?.response?.data?.message ||
+        error?.data?.data?.message ||
+        error?.data?.message ||
+        error?.message ||
         'Có lỗi xảy ra khi biểu quyết, thử lại sau';
       Alert.alert('Lỗi', errorMsg);
     },
