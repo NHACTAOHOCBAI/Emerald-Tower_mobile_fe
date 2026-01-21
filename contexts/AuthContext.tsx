@@ -58,11 +58,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await setAccessToken(accessToken);
     await setStoredUser(profile);
     setUser(profile);
-
     return profile;
   };
 
   const logout = async () => {
+    console.log("logout");
     try {
       await logoutRequest();
     }

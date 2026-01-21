@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/AuthContext";
+import { clearAuthStorage } from "@/utils/auth-storage";
 
 type Errors = { email?: string; password?: string };
 
@@ -39,7 +40,8 @@ export default function LoginScreen() {
       setIsSubmitting(true);
       const profile = await login(email, password);
       if (profile.role !== "RESIDENT") {
-        Alert.alert("Đăng nhập thất bại", " Sai tài khoản hoặc mật khẩu.");
+        Alert.alert("Đăng nhập thất bại", "Không đúng tài khoản.");
+        await clearAuthStorage();   
         await logout();
         return;
       }

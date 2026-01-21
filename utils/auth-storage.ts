@@ -10,6 +10,9 @@ export const getAccessToken = async () => {
 };
 
 export const setAccessToken = async (accessToken: string) => {
+if (typeof accessToken !== "string" || !accessToken) {
+    throw new Error(`setAccessToken expects string, got ${typeof accessToken}`);
+  }
   await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
 };
 
@@ -29,37 +32,16 @@ export const getStoredUser = async () => {
 };
 
 export const setStoredUser = async (user: AuthUser) => {
+  if (!user) throw new Error("setStoredUser: empty user");
   await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
 };
 
 export const clearStoredUser = async () => {
+  console.log("da goi clearStoredUser");
   await SecureStore.deleteItemAsync(USER_KEY);
 };
 
 export const clearAuthStorage = async () => {
+  console.log("da goi clearAuthStorage");
   await Promise.all([clearTokens(), clearStoredUser()]);
-};
-
-/** ===== JWT expire check (RN-safe) ===== */
-const base64UrlDecode = (input: string) => {
-  // base64url -> base64
-  let base64 = input.replace(/-/g, "+").replace(/_/g, "/");
-  // padding
-  while (base64.length % 4) base64 += "=";
-
-  // RN: use global Buffer if available (expo thường có)
-  // Nếu TS báo lỗi Buffer, cài: npm i buffer và thêm polyfill ở entry.
-  const json = Buffer.from(base64, "base64").toString("utf8");
-  return json;
-};
-
-export const isJwtExpired = (token: string) => {
-  try {
-    const payloadStr = base64UrlDecode(token.split(".")[1]);
-    const payload = JSON.parse(payloadStr);
-    const expMs = payload.exp * 1000;
-    return Date.now() >= expMs - 5000; // 5s buffer
-  } catch {
-    return true;
-  }
 };

@@ -35,18 +35,25 @@ const resolveRefreshQueue = (token: string | null) => {
 };
 
 const forceLogout = async () => {
+  resolveRefreshQueue(null);
+  isRefreshing = false;
   await clearAuthStorage();
   router.replace("/(auth)/login");
 };
 
 api.interceptors.request.use(async (config) => {
   const token = await getAccessToken();
+  config.headers = config.headers || {};
+
   if (token) {
-    config.headers = config.headers || {};
     (config.headers as any).Authorization = `Bearer ${token}`;
+  }
+  else {
+    delete (config.headers as any).Authorization;
   }
   return config;
 });
+
 api.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
@@ -57,7 +64,16 @@ api.interceptors.response.use(
     const url = String(original?.url ?? "");
 
     // Không refresh cho chính auth endpoints
-    if (url.includes("/auth/")) return Promise.reject(error);
+    const skipRefreshPaths = [
+      "/auth/login",
+      "/auth/refresh",
+      "/auth/logout",
+      "/auth/change-password",
+    ];
+
+    if (skipRefreshPaths.some((p) => url.includes(p))) {
+      return Promise.reject(error);
+    }
 
     // Chỉ xử lý 401 và chỉ retry 1 lần
     if (status !== 401 || original._retry) return Promise.reject(error);
@@ -85,12 +101,12 @@ api.interceptors.response.use(
       const accessToken: string | undefined =
         (rr.data as any)?.accessToken ?? (rr.data as any)?.data?.accessToken;
 
-      if (!accessToken) throw new Error("No accessToken in refresh response");
+      if (typeof accessToken !== "string" || !accessToken) {
+        console.log("Bad refresh response:", rr.data);
+        throw new Error("No valid accessToken in refresh response");
+      }
 
       await setAccessToken(accessToken);
-
-      // set default header cho các request sau
-      api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
 
       // giải phóng queue
       resolveRefreshQueue(accessToken);
