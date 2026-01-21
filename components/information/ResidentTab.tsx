@@ -91,6 +91,7 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
   };
 
   const handleLogout = () => {
+    console.log(">>>>>>>logout");
     Alert.alert("Đăng xuất", "Bạn chắc chắn muốn đăng xuất?", [
       { text: "Hủy", style: "cancel" },
       {
