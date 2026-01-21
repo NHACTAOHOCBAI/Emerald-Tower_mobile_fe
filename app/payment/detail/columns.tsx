@@ -26,7 +26,9 @@ const tierColumns: TableColumn<any>[] = [
     align: "right",
     width: "w-[25%]",
     accessor: (item) => (
-      <Text className="font-semibold text-[11px] text-main text-right">{item.total}</Text>
+      <Text className="font-semibold text-[11px] text-main text-right">
+        {item.total} đ
+      </Text>
     ),
   },
 ];

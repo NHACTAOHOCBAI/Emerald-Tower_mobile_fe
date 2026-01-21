@@ -6,7 +6,7 @@ import {
   setAccessToken,
 } from "@/utils/auth-storage";
 
-const baseURL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:4000/api";
+const baseURL = process.env.EXPO_PUBLIC_API_URL;
 
 export const api = axios.create({
   baseURL,
@@ -55,9 +55,11 @@ api.interceptors.request.use(async (config) => {
 });
 
 api.interceptors.response.use(
-  (res) => res,
+  (response) => response,
   async (error: AxiosError) => {
-    if (!error.response) return Promise.reject(error);
+    if (!error.response) {
+      return Promise.reject(error);
+    }
 
     const status = error.response.status;
     const original = error.config as AxiosRequestConfig & { _retry?: boolean };
@@ -111,16 +113,15 @@ api.interceptors.response.use(
       // giải phóng queue
       resolveRefreshQueue(accessToken);
 
-      // retry request cũ với token mới
       original.headers = original.headers ?? {};
       (original.headers as any).Authorization = `Bearer ${accessToken}`;
       return api(original);
-    } catch (e) {
+    } catch (refreshError) {
       resolveRefreshQueue(null);
       await forceLogout();
-      return Promise.reject(e);
+      return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;
     }
-  },
+  }
 );

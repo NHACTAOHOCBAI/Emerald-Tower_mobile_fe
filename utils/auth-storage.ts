@@ -4,10 +4,8 @@ import type { AuthUser } from "@/types/auth";
 const ACCESS_TOKEN_KEY = "access_token";
 const USER_KEY = "auth_user";
 
-/** ===== Access token ===== */
-export const getAccessToken = async () => {
-  return await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-};
+export const getAccessToken = async () => SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+
 
 export const setAccessToken = async (accessToken: string) => {
 if (typeof accessToken !== "string" || !accessToken) {
@@ -20,7 +18,6 @@ export const clearTokens = async () => {
   await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
 };
 
-/** ===== User ===== */
 export const getStoredUser = async () => {
   const raw = await SecureStore.getItemAsync(USER_KEY);
   if (!raw) return null;

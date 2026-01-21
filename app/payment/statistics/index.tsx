@@ -216,7 +216,7 @@ export default function StatisticsScreen() {
               <View className="items-center overflow-hidden">
                 <LineChart
                   data={chartData}
-                  width={screenWidth - 29}
+                  width={screenWidth - 35}
                   height={220}
                   chartConfig={chartConfig}
                   bezier

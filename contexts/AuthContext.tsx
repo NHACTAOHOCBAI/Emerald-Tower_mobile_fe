@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { AuthUser } from "@/types/auth";
-import { getProfile, login as loginRequest, logout as logoutRequest } from "@/services/auth";
+import { getProfile, login as loginRequest, logout as logoutRequest  } from "@/services/auth";
 import {
   clearAuthStorage,
   getAccessToken,
@@ -27,23 +27,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const boot = async () => {
+      const token = await getAccessToken();
+      const storedUser = await getStoredUser();
+
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+
+      if (storedUser) {
+        setUser(storedUser);
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        const token = await getAccessToken();
-        const storedUser = await getStoredUser();
-
-        if (storedUser) setUser(storedUser);
-
-        if (!token) {
-          setUser(null);
-          return;
-        }
-
         const profile = await getProfile();
         await setStoredUser(profile);
         setUser(profile);
       } catch {
         await clearAuthStorage();
-        setUser(null);
       } finally {
         setIsLoading(false);
       }

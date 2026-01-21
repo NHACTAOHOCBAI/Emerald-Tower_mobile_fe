@@ -1,28 +1,55 @@
 import { useRouter } from "expo-router";
-import { Droplet, Zap } from "lucide-react-native";
-import React, { useState } from "react";
+import { Droplet, Home, Zap } from "lucide-react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import BaseInput from "@/components/ui/BaseInput";
 import BigImageUpload from "@/components/ui/BigImageUpload";
 import MyButton from "@/components/ui/Button";
 import { CustomHeader } from "@/components/ui/CustomHeader";
+import MyDropdown from "@/components/ui/Dropdown";
+
+import { useScanMeter } from "@/hooks/useAI";
+import { useSubmitMeterReading } from "@/hooks/useInvoice";
+import { useResidentProfile } from "@/hooks/useResident";
 
 export default function InputMeterScreen() {
   const router = useRouter();
-  const [step, setStep] = useState(1); // 1: điện, 2: nước
+  const [step, setStep] = useState(1);
+  const scrollViewRef = useRef<ScrollView>(null);
 
+  const [selectedApartmentId, setSelectedApartmentId] = useState<number | null>(null);
   const [elecIndex, setElecIndex] = useState("");
   const [waterIndex, setWaterIndex] = useState("");
   const [elecImage, setElecImage] = useState<string | null>(null);
   const [waterImage, setWaterImage] = useState<string | null>(null);
+
+  const mutation = useSubmitMeterReading();
+  const { data: profile, isLoading: isLoadingProfile } = useResidentProfile();
+  const scanMutation = useScanMeter();
+
+  const apartmentOptions = useMemo(() => {
+    if (!profile?.apartments) return [];
+    return profile.apartments.map((item) => ({
+      label: `${item.apartment.name} - ${item.apartment.block.name}`,
+      value: item.apartment.id,
+    }));
+  }, [profile]);
+
+  useEffect(() => {
+    if (apartmentOptions.length > 0 && !selectedApartmentId) {
+      setSelectedApartmentId(Number(apartmentOptions[0].value));
+    }
+  }, [apartmentOptions]);
 
   const isInvalidNumber = (text: string) => {
     if (text.length === 0) return false;
@@ -32,32 +59,83 @@ export default function InputMeterScreen() {
   const isElecError = isInvalidNumber(elecIndex);
   const isWaterError = isInvalidNumber(waterIndex);
 
-  // config UI theo bước
   const isElec = step === 1;
   const iconColor = isElec ? "#FACC15" : "#3B82F6";
   const StepIcon = isElec ? Zap : Droplet;
-
-  // Xác định lỗi hiện tại để render UI
   const currentError = isElec ? isElecError : isWaterError;
 
-  // validate (Thêm điều kiện !isError để chặn nút nếu nhập sai)
-  const isValidStep1 = elecIndex.length > 0 && !isElecError && elecImage !== null;
+  const isValidStep1 =
+    selectedApartmentId !== null &&
+    elecIndex.length > 0 &&
+    !isElecError &&
+    elecImage !== null;
+
   const isValidStep2 = waterIndex.length > 0 && !isWaterError && waterImage !== null;
 
   const handleNext = () => {
     if (step === 1) setStep(2);
   };
+
   const handleBack = () => {
     if (step === 2) setStep(1);
     else router.back();
   };
+
   const handleSubmit = () => {
-    console.log({ elecIndex, elecImage, waterIndex, waterImage });
-    router.back();
+    if (!isValidStep1 || !isValidStep2 || !selectedApartmentId) {
+      Alert.alert("Thiếu thông tin", "Vui lòng nhập đầy đủ chỉ số và chọn căn hộ.");
+      return;
+    }
+
+    mutation.mutate({
+      apartmentId: selectedApartmentId,
+      electricityIndex: Number(elecIndex),
+      waterIndex: Number(waterIndex),
+      electricityImage: elecImage!,
+      waterImage: waterImage!,
+    });
   };
 
+  const handleImageChange = (uri: string | null) => {
+    if (isElec) {
+      setElecImage(uri);
+      if (uri) triggerScan(uri, setElecIndex);
+    } else {
+      setWaterImage(uri);
+      if (uri) triggerScan(uri, setWaterIndex);
+    }
+  };
+
+  const triggerScan = (uri: string, setIndex: (val: string) => void) => {
+    scanMutation.mutate(uri, {
+      onSuccess: (reading) => {
+        const num = Number(reading);
+        if (!isNaN(num)) {
+          setIndex(String(num));
+        } else {
+          Alert.alert("Thông báo", "Không nhận diện được số rõ ràng. Vui lòng nhập tay.");
+        }
+      },
+      onError: () => {},
+    });
+  };
+
+  const scrollToInput = () => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 150);
+  };
+
+  if (isLoadingProfile) {
+    return (
+      <SafeAreaView className="flex-1 justify-center items-center bg-[#F3F4F6]">
+        <ActivityIndicator size="large" color="#244B35" />
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView className="flex-1 bg-[#F3F4F6]">
+    <SafeAreaView className="flex-1 bg-[#F3F4F6]" edges={["top", "left", "right"]}>
       <CustomHeader title="Nhập chỉ số đồng hồ" onBackPress={handleBack}>
         <View className="items-center">
           <Text className="text-xs text-gray-500">Bước {step}/2</Text>
@@ -66,11 +144,17 @@ export default function InputMeterScreen() {
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+        style={{ flex: 1 }}
       >
-        <ScrollView className="flex-1 px-5 pt-2" showsVerticalScrollIndicator={false}>
-          {/* progress bar */}
-          <View className="flex-row gap-2 mb-8">
+        <ScrollView
+          ref={scrollViewRef}
+          className="flex-1 px-5 pt-2"
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ flexGrow: 1 }}
+        >
+          <View className="flex-row gap-2 mb-6">
             <View
               className={`h-1.5 flex-1 rounded-full ${step >= 1 ? "bg-[#1a4c30]" : "bg-gray-200"}`}
             />
@@ -78,6 +162,30 @@ export default function InputMeterScreen() {
               className={`h-1.5 flex-1 rounded-full ${step >= 2 ? "bg-[#1a4c30]" : "bg-gray-200"}`}
             />
           </View>
+
+          {step === 1 && (
+            <View className="mb-6">
+              <View className="flex-row items-center gap-2 mb-2">
+                <Home size={20} color="#244B35" />
+                <Text className="text-base font-extrabold text-main">
+                  Chọn căn hộ <Text className="text-red-500">*</Text>
+                </Text>
+              </View>
+              <MyDropdown
+                placeholder="Chọn căn hộ..."
+                items={apartmentOptions}
+                value={selectedApartmentId || undefined}
+                onSelect={(val) => setSelectedApartmentId(Number(val))}
+                disabled={mutation.isPending}
+                className="mt-1.5"
+              />
+              {apartmentOptions.length === 0 && (
+                <Text className="text-red-500 text-xs mt-1.5">
+                  Không tìm thấy căn hộ nào.
+                </Text>
+              )}
+            </View>
+          )}
 
           <View className="flex-row items-center gap-2 mb-7">
             <StepIcon size={24} color={iconColor} fill={iconColor} />
@@ -88,55 +196,65 @@ export default function InputMeterScreen() {
 
           <View className="mb-6">
             <Text className="font-semibold text-gray-800 mb-2">
-              Nhập chỉ số {isElec ? "điện (kWh)" : "nước (m³)"}{" "}
-              <Text className="text-red-500">*</Text>
-            </Text>
-
-            <TextInput
-              value={isElec ? elecIndex : waterIndex}
-              onChangeText={isElec ? setElecIndex : setWaterIndex}
-              placeholder={isElec ? "Ví dụ: 1593" : "Ví dụ: 159"}
-              placeholderTextColor="#D1D5DD"
-              keyboardType="numeric"
-              className={`w-full bg-white border rounded-xl py-5 text-xl font-bold text-center 
-                ${
-                  currentError
-                    ? "border-red-500 text-red-500 bg-red-50"
-                    : "border-gray-200 text-black"
-                }`}
-            />
-
-            {/* thông báo lỗi hoặc hướng dẫn */}
-            {currentError ? (
-              <Text className="text-xs text-red-500 mt-2 text-center font-medium">
-                Vui lòng chỉ nhập số nguyên, không nhập ký tự lạ.
-              </Text>
-            ) : (
-              <Text className="text-xs text-gray-400 mt-2 text-center">
-                Chỉ số từ đồng hồ {isElec ? "điện" : "nước"} của bạn
-              </Text>
-            )}
-          </View>
-
-          <View className="mb-8">
-            <Text className="font-semibold text-gray-800 mb-2">
               Chụp ảnh minh chứng <Text className="text-red-500">*</Text>
             </Text>
             <BigImageUpload
               value={isElec ? elecImage : waterImage}
-              onChange={(img) => (isElec ? setElecImage(img) : setWaterImage(img))}
+              onChange={handleImageChange}
               height={200}
             />
+
+            {scanMutation.isPending && (
+              <View className="flex-row items-center justify-center mt-3 bg-gray-100 py-2 rounded-lg">
+                <ActivityIndicator size="small" color={iconColor} />
+                <Text className="ml-2 text-xs text-gray-600 font-medium">
+                  Đang đọc chỉ số từ ảnh...
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <View className="mb-8">
+            <View className="flex-row justify-between items-center mb-2">
+              <Text className="font-semibold text-gray-800">
+                Nhập chỉ số {isElec ? "điện (kWh)" : "nước (m³)"}{" "}
+                <Text className="text-red-500">*</Text>
+              </Text>
+            </View>
+
+            <BaseInput
+              value={isElec ? elecIndex : waterIndex}
+              onChangeText={isElec ? setElecIndex : setWaterIndex}
+              placeholder={isElec ? "Ví dụ: 1593" : "Ví dụ: 159"}
+              keyboardType="numeric"
+              error={currentError ? "Vui lòng chỉ nhập số nguyên" : undefined}
+              style={{
+                fontSize: 18,
+                fontWeight: "bold",
+                textAlign: "center",
+              }}
+              className="bg-white py-2"
+              disabled={mutation.isPending}
+              onFocus={scrollToInput}
+            />
+
+            {!currentError && (
+              <Text className="text-xs text-gray-400 mt-2 text-center">
+                {scanMutation.isPending
+                  ? "Hệ thống đang tự động điền..."
+                  : `Chỉ số từ đồng hồ ${isElec ? "điện" : "nước"} của bạn`}
+              </Text>
+            )}
           </View>
         </ScrollView>
 
-        <View className="p-5 border-t border-gray-100">
+        <View className="p-5 border-t border-gray-100 bg-white">
           {step === 1 ? (
             <MyButton
               variant="primary"
               className="!bg-[#E09B6B] !w-full h-14"
               onPress={handleNext}
-              disabled={!isValidStep1}
+              disabled={!isValidStep1 || scanMutation.isPending}
             >
               Tiếp tục
             </MyButton>
@@ -145,9 +263,10 @@ export default function InputMeterScreen() {
               <View className="flex-1">
                 <MyButton
                   variant="outline"
-                  className="!w-full h-12 border-gray-400"
+                  className="!w-full h-14 border-gray-400"
                   textClassName="text-gray-700 font-semibold"
                   onPress={handleBack}
+                  disabled={mutation.isPending}
                 >
                   Quay lại
                 </MyButton>
@@ -159,9 +278,9 @@ export default function InputMeterScreen() {
                   className="!bg-[#E09B6B] !w-full h-14"
                   textClassName="font-bold"
                   onPress={handleSubmit}
-                  disabled={!isValidStep2}
+                  disabled={!isValidStep2 || mutation.isPending || scanMutation.isPending}
                 >
-                  Xác nhận
+                  {mutation.isPending ? <ActivityIndicator color="white" /> : "Xác nhận"}
                 </MyButton>
               </View>
             </View>
