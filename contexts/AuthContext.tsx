@@ -1,11 +1,15 @@
-import { getProfile, login as loginRequest } from "@/services/auth";
+import {
+  getProfile,
+  login as loginRequest,
+  logout as logoutRequest,
+} from "@/services/auth";
 import type { AuthUser } from "@/types/auth";
 import {
   clearAuthStorage,
   getAccessToken,
-  getStoredUser,
-  setStoredUser,
-  setTokens,
+
+
+  setAccessToken,
 } from "@/utils/auth-storage";
 import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
@@ -57,26 +61,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     const data = await loginRequest(email, password);
-    const { accessToken, refreshToken, ...profile } = data;
-    await setTokens(accessToken, refreshToken);
-    try {
-      const freshProfile = await getProfile();
-      await setStoredUser(freshProfile);
-      setUser(freshProfile);
-      return freshProfile;
-    } catch {
-      await setStoredUser(profile);
-      setUser(profile);
-      return profile;
-    }
+    const { accessToken, ...profile } = data;
+    await setAccessToken(accessToken);
+    await setStoredUser(profile);
+    setUser(profile);
+    return profile;
   };
 
   const logout = async () => {
+    console.log("logout");
     try {
+      await logoutRequest();
+    } finally {
       await clearAuthStorage();
-      setUser(null);
-    } catch (error) {
-      console.error("[Auth] Logout error:", error);
       setUser(null);
     }
   };
