@@ -528,12 +528,27 @@ export default function BillDetailScreen() {
                 <MyButton
                   variant="secondary"
                   className="h-12 w-full"
-                  onPress={() =>
+                  onPress={() => {
+                    const invoiceId = numericId;
+                    const amount = Number(processedData.totalAmount);
+                    const invoiceIds = JSON.stringify([invoiceId]);
+
+                    // console.log("🔍 [DetailScreen] Navigating to payment/method:", {
+                    //   invoiceId,
+                    //   amount,
+                    //   invoiceIds,
+                    //   stringified: invoiceIds,
+                    // });
+
                     router.push({
                       pathname: "/payment/method",
-                      params: { amount: Number(processedData.totalAmount) },
-                    })
-                  }
+                      params: {
+                        amount: String(amount),
+                        invoiceIds: invoiceIds,
+                        targetType: "INVOICE",
+                      },
+                    });
+                  }}
                 >
                   <Wallet size={18} color="white" style={{ marginRight: 8 }} />
                   <Text className="text-white font-bold text-base">Thanh toán</Text>
