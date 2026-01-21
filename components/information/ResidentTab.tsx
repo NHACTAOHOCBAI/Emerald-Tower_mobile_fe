@@ -30,9 +30,13 @@ import BaseInput from "@/components/ui/BaseInput";
 import DatePicker from "@/components/ui/DatePicker";
 import MyDropdown from "@/components/ui/Dropdown";
 import MySelect from "@/components/ui/Select";
+import { useAuth } from "@/contexts/AuthContext";
 import { useProvinces, useWardsByProvince } from "@/hooks/useLocation";
 import { useUpdateResident } from "@/hooks/useResident";
+import { changePassword } from "@/services/auth";
 import { ResidentResponse } from "@/types/resident";
+import MyButton from "../ui/Button";
+import { ChangePasswordModal } from "./ChangePasswordModal";
 import { InfoRow } from "./InfoRow";
 import {
   checkIsVietnam,
@@ -44,10 +48,6 @@ import {
   parseDateString,
   residentSchema,
 } from "./ResidentHelpers";
-import { ChangePasswordModal } from "./ChangePasswordModal";
-import MyButton from "../ui/Button";
-import { useAuth } from "@/contexts/AuthContext";
-import { changePassword } from "@/services/auth";
 
 interface ResidentTabProps {
   data: ResidentResponse;
@@ -97,6 +97,7 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
       },
     ]);
   };
+
   const { control, handleSubmit, reset, setValue, watch } = useForm({
     resolver: yupResolver(residentSchema),
     defaultValues: {
@@ -111,10 +112,17 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
     },
   });
 
-  const currentProvince = watch("province");
-  const currentWard = watch("ward");
   const currentNationality = watch("nationality");
   const isVietnam = checkIsVietnam(currentNationality);
+
+  const renderLabel = (text: string) => {
+    if (!isEditing) return text;
+    return (
+      <Text>
+        {text} <Text className="text-red-500">*</Text>
+      </Text>
+    );
+  };
 
   const resetToOriginal = () => {
     reset({
@@ -183,6 +191,12 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
   };
 
   const onSubmit: SubmitHandler<any> = (formData) => {
+    // nếu không phải VN thì clear địa chỉ hành chính
+    if (!isVietnam) {
+      formData.province = "";
+      formData.ward = "";
+    }
+
     updateMutation.mutate(
       {
         id: data.id,
@@ -192,16 +206,16 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
           dob: formatDateForAPI(formData.dob),
           citizenId: data.citizenId,
           gender: formData.gender,
-          province: isVietnam ? formData.province : "",
-          ward: isVietnam ? formData.ward : "",
+          province: formData.province,
+          ward: formData.ward,
           district: "",
           detailAddress: formData.detailAddress,
           image: selectedImage
             ? {
-              uri: selectedImage.uri,
-              fileName: selectedImage.fileName,
-              mimeType: selectedImage.mimeType,
-            }
+                uri: selectedImage.uri,
+                fileName: selectedImage.fileName,
+                mimeType: selectedImage.mimeType,
+              }
             : undefined,
         },
       },
@@ -210,7 +224,10 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
           Alert.alert("Thành công", "Cập nhật hồ sơ thành công!");
           setIsEditing(false);
         },
-        onError: () => Alert.alert("Lỗi", "Cập nhật thất bại."),
+        onError: (err: any) => {
+          console.log(err);
+          Alert.alert("Lỗi", "Cập nhật thất bại.");
+        },
       },
     );
   };
@@ -268,27 +285,32 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
 
       <View className="flex-row justify-between items-center mb-4">
         <Text className="text-[#E09B6B] text-lg font-bold">Thông tin chung</Text>
-        <View className="flex-row gap-2">
+
+        <View className="flex-row gap-2 items-center">
           {isEditing && (
             <TouchableOpacity
               onPress={handleCancel}
               disabled={updateMutation.isPending}
-              className="px-4 py-1.5 rounded-full border border-gray-300 bg-gray-100"
+              className="px-4 py-1.5 rounded-full border border-gray-300 bg-gray-100 justify-center items-center h-full"
+              style={{ minHeight: 32 }}
             >
-              <Text className="text-xs font-bold text-gray-600">Hủy</Text>
+              <Text className="text-xs font-bold text-gray-600 text-center">Hủy</Text>
             </TouchableOpacity>
           )}
 
           <TouchableOpacity
             disabled={updateMutation.isPending}
             onPress={() => (isEditing ? handleSubmit(onSubmit)() : setIsEditing(true))}
-            className={`px-4 py-1.5 rounded-full border flex-row items-center gap-2 ${isEditing ? "bg-[#E09B6B] border-[#E09B6B]" : "border-[#E09B6B]"
-              }`}
+            className={`px-4 py-1.5 rounded-full border flex-row items-center justify-center gap-2 ${
+              isEditing ? "bg-[#E09B6B] border-[#E09B6B]" : "border-[#E09B6B]"
+            }`}
+            style={{ minHeight: 32 }}
           >
             {updateMutation.isPending && <ActivityIndicator size="small" color="white" />}
             <Text
-              className={`text-xs font-bold ${isEditing ? "text-white" : "text-[#E09B6B]"
-                }`}
+              className={`text-xs font-bold ${
+                isEditing ? "text-white" : "text-[#E09B6B]"
+              }`}
             >
               {isEditing ? "Lưu thay đổi" : "✎ Chỉnh sửa"}
             </Text>
@@ -303,7 +325,11 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
               control={control}
               name="fullName"
               render={({ field: { onChange, value }, fieldState: { error } }) => (
-                <InfoRow icon={User} label="Họ và tên" isEditing={true}>
+                <InfoRow
+                  icon={User}
+                  label={renderLabel("Họ và tên") as any}
+                  isEditing={true}
+                >
                   <BaseInput
                     value={value ?? ""}
                     onChangeText={onChange}
@@ -324,7 +350,11 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
               control={control}
               name="gender"
               render={({ field: { onChange, value }, fieldState: { error } }) => (
-                <InfoRow icon={UserRound} label="Giới tính" isEditing={true}>
+                <InfoRow
+                  icon={UserRound}
+                  label={renderLabel("Giới tính") as any}
+                  isEditing={true}
+                >
                   <MyDropdown
                     value={value}
                     items={GENDER_OPTIONS}
@@ -354,7 +384,11 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
               control={control}
               name="dob"
               render={({ field: { onChange, value }, fieldState: { error } }) => (
-                <InfoRow icon={Calendar} label="Ngày sinh" isEditing={true}>
+                <InfoRow
+                  icon={Calendar}
+                  label={renderLabel("Ngày sinh") as any}
+                  isEditing={true}
+                >
                   <DatePicker
                     label=""
                     value={value}
@@ -380,7 +414,11 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
               control={control}
               name="phone"
               render={({ field: { onChange, value }, fieldState: { error } }) => (
-                <InfoRow icon={Phone} label="Số điện thoại" isEditing={true}>
+                <InfoRow
+                  icon={Phone}
+                  label={renderLabel("Số điện thoại") as any}
+                  isEditing={true}
+                >
                   <BaseInput
                     value={value ?? ""}
                     onChangeText={(text) => onChange(formatPhoneNumber(text))}
@@ -414,26 +452,37 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
         {(isEditing ? isVietnam : data.province) && (
           <View className="mb-3">
             {isEditing ? (
-              <InfoRow icon={MapPin} label="Tỉnh / Thành phố" isEditing={true}>
-                <MySelect
-                  value={
-                    currentProvince
-                      ? provinceOptions.find((o) => o.label === currentProvince)?.value
-                      : undefined
-                  }
-                  items={provinceOptions}
-                  placeholder={loadingProvinces ? "Đang tải..." : "Chọn Tỉnh/TP"}
-                  searchable={true}
-                  onSelect={(val) => {
-                    const selected = provinceOptions.find((p) => p.value === val);
-                    if (selected) {
-                      setValue("province", selected.label);
-                      setValue("ward", "");
-                      setProvinceCode(selected.value as number);
-                    }
-                  }}
-                />
-              </InfoRow>
+              <Controller
+                control={control}
+                name="province"
+                render={({ field: { value }, fieldState: { error } }) => (
+                  <InfoRow
+                    icon={MapPin}
+                    label={renderLabel("Tỉnh / Thành phố") as any}
+                    isEditing={true}
+                  >
+                    <MySelect
+                      value={
+                        value
+                          ? provinceOptions.find((o) => o.label === value)?.value
+                          : undefined
+                      }
+                      items={provinceOptions}
+                      placeholder={loadingProvinces ? "Đang tải..." : "Chọn Tỉnh/TP"}
+                      searchable={true}
+                      error={error?.message}
+                      onSelect={(val) => {
+                        const selected = provinceOptions.find((p) => p.value === val);
+                        if (selected) {
+                          setValue("province", selected.label, { shouldValidate: true });
+                          setValue("ward", "", { shouldValidate: true });
+                          setProvinceCode(selected.value as number);
+                        }
+                      }}
+                    />
+                  </InfoRow>
+                )}
+              />
             ) : (
               <InfoRow
                 icon={MapPin}
@@ -447,22 +496,35 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
         {(isEditing ? isVietnam : data.ward) && (
           <View className="mb-3">
             {isEditing ? (
-              <InfoRow icon={MapPin} label="Xã / Phường" isEditing={true}>
-                <MySelect
-                  value={currentWard ?? undefined}
-                  items={wardOptions}
-                  placeholder={
-                    !provinceCode
-                      ? "Vui lòng chọn Tỉnh trước"
-                      : loadingWards
-                        ? "Đang tải..."
-                        : "Chọn Xã/Phường"
-                  }
-                  disabled={!provinceCode}
-                  searchable={true}
-                  onSelect={(val) => setValue("ward", val as string)}
-                />
-              </InfoRow>
+              <Controller
+                control={control}
+                name="ward"
+                render={({ field: { value }, fieldState: { error } }) => (
+                  <InfoRow
+                    icon={MapPin}
+                    label={renderLabel("Xã / Phường") as any}
+                    isEditing={true}
+                  >
+                    <MySelect
+                      value={value ?? undefined}
+                      items={wardOptions}
+                      placeholder={
+                        !provinceCode
+                          ? "Vui lòng chọn Tỉnh trước"
+                          : loadingWards
+                            ? "Đang tải..."
+                            : "Chọn Xã/Phường"
+                      }
+                      disabled={!provinceCode}
+                      searchable={true}
+                      error={error?.message}
+                      onSelect={(val) =>
+                        setValue("ward", val as string, { shouldValidate: true })
+                      }
+                    />
+                  </InfoRow>
+                )}
+              />
             ) : (
               <InfoRow
                 icon={MapPin}
@@ -498,6 +560,7 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
           )}
         </View>
       </View>
+
       <View className="mt-6 pb-6 flex-row gap-4 justify-center">
         <MyButton
           onPress={() => setPwdOpen(true)}
@@ -506,14 +569,9 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
         >
           Đổi mật khẩu
         </MyButton>
-        <MyButton
-          onPress={handleLogout}
-          className="py-3"
-        >
+        <MyButton onPress={handleLogout} className="py-3 bg-red-600 active:bg-red-700">
           <View className="flex-row items-center gap-2">
-            <Text className="text-white font-semibold">
-              Đăng xuất
-            </Text>
+            <Text className="text-white font-semibold">Đăng xuất</Text>
             <LogOut size={18} color="white" />
           </View>
         </MyButton>

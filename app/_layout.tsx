@@ -1,17 +1,13 @@
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useFonts } from 'expo-font';
 import { Stack, router, useSegments } from 'expo-router';
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
-import { ActivityIndicator, Alert, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import '../global.css';
 
 const queryClient = new QueryClient();
-
-(Text as any).defaultProps = (Text as any).defaultProps || {};
-(Text as any).defaultProps.style = { fontFamily: 'BeVietnamPro' };
 
 const AuthGate = ({ children }: { children: ReactNode }) => {
   const { user, isLoading, logout } = useAuth();
@@ -48,21 +44,6 @@ const AuthGate = ({ children }: { children: ReactNode }) => {
 };
 
 export default function RootLayout() {
-  const [loaded] = useFonts({
-    BeVietnamPro: require('../assets/fonts/BeVietnamPro-Regular.ttf'),
-    BeVietnamProMedium: require('../assets/fonts/BeVietnamPro-Medium.ttf'),
-    BeVietnamProSemiBold: require('../assets/fonts/BeVietnamPro-SemiBold.ttf'),
-    BeVietnamProBold: require('../assets/fonts/BeVietnamPro-Bold.ttf'),
-  });
-
-  if (!loaded) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
-
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
