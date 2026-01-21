@@ -1,34 +1,14 @@
-export interface InvoiceHistory {
-  id: string;
-  invoiceCode: string;
-  title: string;
-  amount: number;
-  status: "paid" | "unpaid" | "overdue";
-  dueDate: string;
-}
-
-export interface ServiceItem {
-  id: string;
-  name: string;
-  amount: number;
-  type: "management" | "electricity" | "water";
-  period: string;
-}
-
-export interface MonthlyInvoice {
-  id: string;
-  invoiceCode: string;
-  monthTitle: string;
-  period: string;
-  totalAmount: number;
-  status: "unpaid" | "selected";
-  items: ServiceItem[];
-}
-
-export interface StatisticsItem {
-  month: string;
-  elec: string;
-  water: string;
-  service: string;
-  total: string;
+export interface PaymentTransaction {
+  id: number;
+  txnRef: string;
+  targetType: string;
+  targetId: number;
+  amount: string; // "4252270.00"
+  currency: string;
+  paymentMethod: string; // "MOMO", "VNPAY"
+  status: "PENDING" | "SUCCESS" | "FAILED";
+  description: string;
+  payDate: string | null;
+  paymentUrl: string | null;
+  createdAt: string;
 }
