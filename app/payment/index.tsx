@@ -1,38 +1,65 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { CreditCard } from "lucide-react-native";
 import { useMemo, useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AccordionItem } from "@/components/payment/MonthInvoiceAccordion";
 import MyButton from "@/components/ui/Button";
 import { CustomHeader } from "@/components/ui/CustomHeader";
-import { MOCK_DETAIL_INVOICES } from "@/constants/mockPaymentData";
+import { useResidentInvoices } from "@/hooks/useInvoice";
 
 export default function PaymentDetailScreen() {
   const router = useRouter();
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const { filterIds } = useLocalSearchParams(); // nhận Ids từ trang trước
 
-  const handleToggle = (id: string) => {
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const { data: invoices, isLoading } = useResidentInvoices();
+
+  // lọc hóa đơn cần thanh toán trong filterIds
+  const unpaidInvoices = useMemo(() => {
+    let list =
+      invoices?.filter((i) => i.status === "UNPAID" || i.status === "OVERDUE") || [];
+
+    if (filterIds) {
+      try {
+        const ids = JSON.parse(filterIds as string);
+        if (Array.isArray(ids) && ids.length > 0) {
+          list = list.filter((inv) => ids.includes(inv.id));
+        }
+      } catch (e) {
+        console.error("Lỗi parse filterIds", e);
+      }
+    }
+    return list;
+  }, [invoices, filterIds]);
+
+  const handleToggle = (id: number) => {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
 
-  const handleGoToDetail = (invoiceId: string) => {
+  const handleGoToDetail = (invoiceId: number) => {
     router.push({
       pathname: "/payment/detail/[id]",
       params: { id: invoiceId },
     });
   };
 
-  // tính tổng tiền
+  // tính tổng tiền hóa đơn được chọn
   const totalPay = useMemo(() => {
-    return MOCK_DETAIL_INVOICES.filter((bill) => selectedIds.includes(bill.id)).reduce(
-      (sum, bill) => sum + bill.totalAmount,
-      0,
-    );
-  }, [selectedIds]);
+    return unpaidInvoices
+      .filter((bill) => selectedIds.includes(bill.id))
+      .reduce((sum, bill) => sum + Number(bill.totalAmount), 0);
+  }, [selectedIds, unpaidInvoices]);
+
+  // auto select all (chọn tất cả khi vào trang)
+  useMemo(() => {
+    if (unpaidInvoices.length > 0 && selectedIds.length === 0) {
+      setSelectedIds(unpaidInvoices.map((i) => i.id));
+    }
+  }, [unpaidInvoices]);
 
   return (
     <SafeAreaView className="flex-1 bg-[#F3F4F6]">
@@ -46,7 +73,7 @@ export default function PaymentDetailScreen() {
         <View className="bg-main p-6 rounded-2xl items-center shadow-sm">
           <Text className="text-gray-300 text-xs mb-2">Số tiền cần thanh toán</Text>
           <Text className="text-white text-3xl font-bold">
-            {totalPay.toLocaleString("vi-VN")} đ
+            {Math.round(totalPay).toLocaleString("vi-VN")} đ
           </Text>
         </View>
 
@@ -58,7 +85,7 @@ export default function PaymentDetailScreen() {
             onPress={() => {
               router.push({
                 pathname: "/payment/method",
-                params: { amount: totalPay },
+                params: { amount: Math.round(totalPay) },
               });
             }}
           >
@@ -71,17 +98,29 @@ export default function PaymentDetailScreen() {
       </View>
 
       <ScrollView className="flex-1 px-4 mt-2" showsVerticalScrollIndicator={false}>
-        <Text className="text-lg font-bold text-main mb-4">Chọn hóa đơn</Text>
+        <Text className="text-lg font-bold text-main mb-4">
+          Chọn hóa đơn ({unpaidInvoices.length})
+        </Text>
 
-        {MOCK_DETAIL_INVOICES.map((bill) => (
-          <AccordionItem
-            key={bill.id}
-            data={bill}
-            isSelected={selectedIds.includes(bill.id)}
-            onToggleSelect={() => handleToggle(bill.id)}
-            onPressDetail={() => handleGoToDetail(bill.id)}
-          />
-        ))}
+        {isLoading ? (
+          <ActivityIndicator color="#244B35" />
+        ) : (
+          unpaidInvoices.map((bill) => (
+            <AccordionItem
+              key={bill.id}
+              data={bill}
+              isSelected={selectedIds.includes(bill.id)}
+              onToggleSelect={() => handleToggle(bill.id)}
+              onPressDetail={() => handleGoToDetail(bill.id)}
+            />
+          ))
+        )}
+
+        {unpaidInvoices.length === 0 && !isLoading && (
+          <Text className="text-center text-gray-400 mt-10">
+            Không có hóa đơn nào cần thanh toán
+          </Text>
+        )}
 
         <View className="h-10" />
       </ScrollView>

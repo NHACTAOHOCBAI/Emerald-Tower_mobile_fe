@@ -72,7 +72,10 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
   const updateMutation = useUpdateResident();
   const [pwdOpen, setPwdOpen] = useState(false);
 
-  const submitChangePassword = async (payload: { oldPassword: string; newPassword: string }) => {
+  const submitChangePassword = async (payload: {
+    oldPassword: string;
+    newPassword: string;
+  }) => {
     try {
       await changePassword(payload);
       Alert.alert("Thành công", "Đổi mật khẩu thành công.");
@@ -569,12 +572,16 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
         >
           Đổi mật khẩu
         </MyButton>
-        <MyButton onPress={handleLogout} className="py-3 bg-red-600 active:bg-red-700">
+        <TouchableOpacity
+          onPress={handleLogout}
+          activeOpacity={0.8}
+          className="rounded-lg px-[26px] py-[8px] bg-red-600 flex-row items-center justify-center self-start"
+        >
           <View className="flex-row items-center gap-2">
             <Text className="text-white font-semibold">Đăng xuất</Text>
             <LogOut size={18} color="white" />
           </View>
-        </MyButton>
+        </TouchableOpacity>
       </View>
       <ChangePasswordModal
         open={pwdOpen}
