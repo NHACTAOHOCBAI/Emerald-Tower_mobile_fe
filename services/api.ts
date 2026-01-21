@@ -7,7 +7,7 @@ import {
   setTokens,
 } from "@/utils/auth-storage";
 
-const baseURL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:8080/api";
+const baseURL = process.env.EXPO_PUBLIC_API_URL;
 
 export const api = axios.create({
   baseURL,
@@ -50,10 +50,13 @@ api.interceptors.response.use(
     }
 
     const status = error.response.status;
-    const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as AxiosRequestConfig & {
+      _retry?: boolean;
+    };
     const requestUrl = originalRequest?.url || "";
     const isAuthRequest =
-      requestUrl.includes("/auth/login") || requestUrl.includes("/auth/refresh");
+      requestUrl.includes("/auth/login") ||
+      requestUrl.includes("/auth/refresh");
 
     if (status === 401 && !originalRequest?._retry && !isAuthRequest) {
       const refreshToken = await getRefreshToken();
@@ -92,7 +95,8 @@ api.interceptors.response.use(
           },
         );
 
-        const { accessToken, refreshToken: newRefreshToken } = refreshResponse.data.data as {
+        const { accessToken, refreshToken: newRefreshToken } = refreshResponse
+          .data.data as {
           accessToken: string;
           refreshToken: string;
         };
