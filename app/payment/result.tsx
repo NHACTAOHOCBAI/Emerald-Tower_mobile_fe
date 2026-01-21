@@ -1,46 +1,75 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { CheckCircle, Copy, Share2 } from "lucide-react-native";
-import { useEffect, useState } from "react";
+import { AlertCircle, CheckCircle, Copy, Share2 } from "lucide-react-native";
+import { useEffect, useRef, useState } from "react";
 import {
-  Alert,
-  Clipboard,
-  ScrollView,
-  Share,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    Clipboard,
+    ScrollView,
+    Share,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import MyButton from "@/components/ui/Button";
 import { CustomHeader } from "@/components/ui/CustomHeader";
-import { getPaymentByTxnRef, PaymentStatusResponse } from "@/services/payment.service";
+import {
+    getPaymentByTxnRef,
+    PaymentStatusResponse,
+} from "@/services/payment.service";
 
 export default function PaymentResultScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const isMountedRef = useRef(true);
 
-  const status = ((params.status as string) || "success") as "success" | "failed";
+  const status = ((params.status as string) || "success") as
+    | "success"
+    | "failed";
   const txnRef = (params.txnRef as string) || "";
   const amount = params.amount ? Number(params.amount as string) : 0;
   const paymentMethod = (params.paymentMethod as string) || "VNPay";
+  const sourceParam = (params.source as string) || ""; // 'gateway' if from payment gateway redirect
 
-  const [paymentDetails, setPaymentDetails] = useState<PaymentStatusResponse | null>(
-    null,
-  );
+  const [paymentDetails, setPaymentDetails] =
+    useState<PaymentStatusResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  // If we have txnRef, fetch payment details
+  // This handles both direct navigation and gateway redirects
   useEffect(() => {
     const fetchPaymentDetails = async () => {
       try {
-        if (txnRef) {
-          const details = await getPaymentByTxnRef(txnRef);
+        if (!txnRef || !isMountedRef.current) return;
+
+        console.log(
+          "[PaymentResult] Fetching payment details for txnRef:",
+          txnRef,
+        );
+
+        const details = await getPaymentByTxnRef(txnRef);
+        if (isMountedRef.current) {
           setPaymentDetails(details);
+          console.log(
+            "[PaymentResult] Payment status from backend:",
+            details.status,
+          );
         }
       } catch (error) {
-        console.error("Lỗi khi lấy chi tiết giao dịch:", error);
+        if (!isMountedRef.current) return;
+        console.error("[Payment] Error fetching details:", error);
+        setError("Không thể tải chi tiết giao dịch");
       } finally {
-        setIsLoading(false);
+        if (isMountedRef.current) {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -48,8 +77,13 @@ export default function PaymentResultScreen() {
   }, [txnRef]);
 
   const handleCopyTxnRef = async () => {
-    await Clipboard.setString(txnRef);
-    Alert.alert("Thông báo", "Đã sao chép mã giao dịch");
+    try {
+      await Clipboard.setString(txnRef);
+      Alert.alert("Thành công", "Đã sao chép mã giao dịch");
+    } catch (error) {
+      console.error("[Payment] Copy error:", error);
+      Alert.alert("Lỗi", "Không thể sao chép mã giao dịch");
+    }
   };
 
   const handleShare = async () => {
@@ -58,12 +92,12 @@ export default function PaymentResultScreen() {
         message: `Giao dịch thanh toán\nMã: ${txnRef}\nSố tiền: ${amount.toLocaleString("vi-VN")} đ\nPhương thức: ${paymentMethod}`,
       });
     } catch (error) {
-      console.error("Lỗi khi chia sẻ:", error);
+      console.error("[Payment] Share error:", error);
     }
   };
 
   const handleDownloadReceipt = () => {
-    Alert.alert("Thông báo", "Chức năng tải hóa đơn sẽ sớm được cập nhật");
+    Alert.alert("Sắp ra mắt", "Chức năng tải hóa đơn sẽ sớm được cập nhật");
   };
 
   const handleBackToPayment = () => {
@@ -78,14 +112,29 @@ export default function PaymentResultScreen() {
         backgroundColor="#F3F4F6"
       />
 
-      <ScrollView className="flex-1 px-4 py-6" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1 px-4 py-6"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Error State */}
+        {error && (
+          <View className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <View className="flex-row items-center mb-2">
+              <AlertCircle size={20} color="#EF4444" className="mr-2" />
+              <Text className="text-red-700 font-semibold flex-1">{error}</Text>
+            </View>
+          </View>
+        )}
+
         {/* Status Badge */}
         <View className="items-center mb-6">
           <View className="bg-green-100 rounded-full p-6 mb-4">
             <CheckCircle size={60} color="#10B981" />
           </View>
           <Text className="text-2xl font-bold text-gray-800 mb-2">
-            {status === "success" ? "Thanh toán thành công" : "Thanh toán thất bại"}
+            {status === "success"
+              ? "Thanh toán thành công"
+              : "Thanh toán thất bại"}
           </Text>
           <Text className="text-sm text-gray-500">
             {status === "success"
@@ -103,7 +152,9 @@ export default function PaymentResultScreen() {
           <View className="border-t border-gray-200 pt-4">
             <View className="flex-row justify-between mb-3">
               <Text className="text-gray-600">Phương thức</Text>
-              <Text className="font-semibold text-gray-800">{paymentMethod}</Text>
+              <Text className="font-semibold text-gray-800">
+                {paymentMethod}
+              </Text>
             </View>
             <View className="flex-row justify-between mb-3">
               <Text className="text-gray-600">Trạng thái</Text>
@@ -128,13 +179,17 @@ export default function PaymentResultScreen() {
 
         {/* Transaction Details */}
         <View className="bg-white rounded-lg p-4 mb-6 shadow-sm">
-          <Text className="font-bold text-gray-800 mb-4">Chi tiết giao dịch</Text>
+          <Text className="font-bold text-gray-800 mb-4">
+            Chi tiết giao dịch
+          </Text>
 
           {/* TxnRef */}
           <View className="bg-gray-50 rounded-lg p-3 mb-3">
             <Text className="text-xs text-gray-500 mb-1">Mã giao dịch</Text>
             <View className="flex-row items-center justify-between">
-              <Text className="font-mono text-sm text-gray-800 flex-1">{txnRef}</Text>
+              <Text className="font-mono text-sm text-gray-800 flex-1">
+                {txnRef}
+              </Text>
               <TouchableOpacity onPress={handleCopyTxnRef} className="ml-2 p-2">
                 <Copy size={18} color="#6B7280" />
               </TouchableOpacity>
@@ -145,7 +200,9 @@ export default function PaymentResultScreen() {
             <>
               {/* Created At */}
               <View className="bg-gray-50 rounded-lg p-3 mb-3">
-                <Text className="text-xs text-gray-500 mb-1">Ngày tạo giao dịch</Text>
+                <Text className="text-xs text-gray-500 mb-1">
+                  Ngày tạo giao dịch
+                </Text>
                 <Text className="text-sm text-gray-800">
                   {new Date(paymentDetails.createdAt).toLocaleString("vi-VN")}
                 </Text>
@@ -154,9 +211,13 @@ export default function PaymentResultScreen() {
               {/* Target Info */}
               {paymentDetails.targetType && (
                 <View className="bg-gray-50 rounded-lg p-3">
-                  <Text className="text-xs text-gray-500 mb-1">Loại thanh toán</Text>
+                  <Text className="text-xs text-gray-500 mb-1">
+                    Loại thanh toán
+                  </Text>
                   <Text className="text-sm text-gray-800">
-                    {paymentDetails.targetType === "INVOICE" ? "Hóa đơn" : "Booking"}
+                    {paymentDetails.targetType === "INVOICE"
+                      ? "Hóa đơn"
+                      : "Booking"}
                   </Text>
                 </View>
               )}
@@ -189,27 +250,31 @@ export default function PaymentResultScreen() {
             GHI CHÚ QUAN TRỌNG
           </Text>
           <Text className="text-xs text-blue-800 leading-5">
-            • Kiểm tra email để nhận biên lai thanh toán{"\n"}• Giao dịch có thể mất vài
-            phút để được cập nhật{"\n"}• Giữ lại mã giao dịch cho hỗ trợ trong tương lai
+            • Kiểm tra email để nhận biên lai thanh toán{"\n"}• Giao dịch có thể
+            mất vài phút để được cập nhật{"\n"}• Giữ lại mã giao dịch cho hỗ trợ
+            trong tương lai
           </Text>
         </View>
 
         {/* Primary Button */}
-        <MyButton
-          variant="secondary"
-          className="w-full h-12 mb-4"
+        <TouchableOpacity
           onPress={handleBackToPayment}
+          className="w-full bg-main rounded-lg p-4 items-center justify-center mb-4"
         >
-          <Text className="text-white font-bold">Quay lại trang thanh toán</Text>
-        </MyButton>
+          <Text className="text-white font-bold text-base">
+            Quay lại trang thanh toán
+          </Text>
+        </TouchableOpacity>
 
         {status === "failed" && (
-          <MyButton
-            className="w-full h-12 border border-main"
+          <TouchableOpacity
             onPress={() => router.back()}
+            className="w-full border-2 border-main rounded-lg p-4 items-center justify-center"
           >
-            <Text className="text-main font-bold">Thử thanh toán khác</Text>
-          </MyButton>
+            <Text className="text-main font-bold text-base">
+              Thử thanh toán khác
+            </Text>
+          </TouchableOpacity>
         )}
       </ScrollView>
     </SafeAreaView>

@@ -2,11 +2,11 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { AlertCircle, CreditCard } from "lucide-react-native";
 import { useState } from "react";
 import {
-  ActivityIndicator,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -50,7 +50,10 @@ export default function PaymentMethodScreen() {
       });
 
       if (!Array.isArray(parsed)) {
-        console.error("❌ JSON.parse succeeded but result is not an array:", parsed);
+        console.error(
+          "❌ JSON.parse succeeded but result is not an array:",
+          parsed,
+        );
         return [];
       }
 
@@ -95,7 +98,9 @@ export default function PaymentMethodScreen() {
     }
   })();
 
-  const bookingId = params.bookingId ? Number(params.bookingId as string) : null;
+  const bookingId = params.bookingId
+    ? Number(params.bookingId as string)
+    : null;
   const targetType = ((params.targetType as string) || "INVOICE") as
     | "INVOICE"
     | "BOOKING";
@@ -183,7 +188,10 @@ export default function PaymentMethodScreen() {
         }
 
         targetId = numFirstId;
-        console.log("✅ INVOICE validation passed:", { targetId, originalId: firstId });
+        console.log("✅ INVOICE validation passed:", {
+          targetId,
+          originalId: firstId,
+        });
       } else if (targetType === "BOOKING") {
         console.log("📦 Processing BOOKING type");
         if (!bookingId || bookingId <= 0) {
@@ -224,6 +232,8 @@ export default function PaymentMethodScreen() {
         targetType: targetType === "INVOICE" ? "INVOICE" : "BOOKING",
         targetId: Number(targetId),
         paymentMethod: selectedMethod.toUpperCase() as "MOMO" | "VNPAY",
+        deviceType: "mobile", // Specify mobile for proper redirect handling
+        // Don't use custom deep link - let backend handle redirect URL
       });
 
       console.log("✅ Payment created successfully:", paymentResponse);
@@ -274,12 +284,21 @@ export default function PaymentMethodScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#F3F4F6]">
-      <CustomHeader title="Thanh toán" showBackButton backgroundColor="#F3F4F6" />
+      <CustomHeader
+        title="Thanh toán"
+        showBackButton
+        backgroundColor="#F3F4F6"
+      />
 
-      <ScrollView className="flex-1 px-4 pt-2" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1 px-4 pt-2"
+        showsVerticalScrollIndicator={false}
+      >
         {/* Amount Display */}
         <View className="bg-main p-6 rounded-2xl items-center shadow-sm mb-6">
-          <Text className="text-gray-300 text-xs mb-2">Số tiền cần thanh toán</Text>
+          <Text className="text-gray-300 text-xs mb-2">
+            Số tiền cần thanh toán
+          </Text>
           <Text className="text-white text-3xl font-bold">
             {totalAmount.toLocaleString("vi-VN")} đ
           </Text>
@@ -288,7 +307,11 @@ export default function PaymentMethodScreen() {
         {/* Error Message */}
         {error && (
           <View className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex-row items-start">
-            <AlertCircle size={20} color="#DC2626" style={{ marginRight: 10 }} />
+            <AlertCircle
+              size={20}
+              color="#DC2626"
+              style={{ marginRight: 10 }}
+            />
             <Text className="flex-1 text-red-700 text-sm">{error}</Text>
           </View>
         )}
@@ -326,7 +349,8 @@ export default function PaymentMethodScreen() {
             className="w-6 h-6 rounded-full border-2"
             style={{
               borderColor: selectedMethod === "vnpay" ? "#E09B6B" : "#D1D5DB",
-              backgroundColor: selectedMethod === "vnpay" ? "#E09B6B" : "transparent",
+              backgroundColor:
+                selectedMethod === "vnpay" ? "#E09B6B" : "transparent",
             }}
           >
             {selectedMethod === "vnpay" && (
@@ -364,7 +388,8 @@ export default function PaymentMethodScreen() {
             className="w-6 h-6 rounded-full border-2"
             style={{
               borderColor: selectedMethod === "momo" ? "#E09B6B" : "#D1D5DB",
-              backgroundColor: selectedMethod === "momo" ? "#E09B6B" : "transparent",
+              backgroundColor:
+                selectedMethod === "momo" ? "#E09B6B" : "transparent",
             }}
           >
             {selectedMethod === "momo" && (
@@ -385,12 +410,16 @@ export default function PaymentMethodScreen() {
           {isLoading ? (
             <>
               <ActivityIndicator color="white" size="small" />
-              <Text className="text-white font-bold text-base ml-2">Đang xử lý...</Text>
+              <Text className="text-white font-bold text-base ml-2">
+                Đang xử lý...
+              </Text>
             </>
           ) : (
             <>
               <CreditCard size={20} color="white" style={{ marginRight: 8 }} />
-              <Text className="text-white font-bold text-base">Xác nhận thanh toán</Text>
+              <Text className="text-white font-bold text-base">
+                Xác nhận thanh toán
+              </Text>
             </>
           )}
         </MyButton>
@@ -401,8 +430,8 @@ export default function PaymentMethodScreen() {
             ℹ️ THÔNG TIN THANH TOÁN
           </Text>
           <Text className="text-xs text-blue-800 leading-5">
-            • Khoảng 15 phút để xác nhận giao dịch{"\n"}• Không mất phí bổ sung{"\n"}•
-            Thanh toán an toàn 100%
+            • Khoảng 15 phút để xác nhận giao dịch{"\n"}• Không mất phí bổ sung
+            {"\n"}• Thanh toán an toàn 100%
           </Text>
         </View>
       </ScrollView>

@@ -3,11 +3,11 @@ import {
   BookingStatus,
   Service,
   SlotAvailability,
-} from '@/types/service';
-import { api } from './api';
+} from "@/types/service";
+import { api } from "./api";
 
-const URI = '/services';
-const BOOKING_URI = '/bookings';
+const URI = "/services";
+const BOOKING_URI = "/bookings";
 
 export const ServiceService = {
   get: async (): Promise<{ data: Service[] }> => {
@@ -26,7 +26,7 @@ export const ServiceService = {
 
   getSlots: async (
     id: number,
-    date: string
+    date: string,
   ): Promise<{ data: SlotAvailability[] }> => {
     const response = await api.get(`${URI}/${id}/resident`, {
       params: { date },
@@ -41,7 +41,7 @@ export const ServiceService = {
     body: {
       bookingDate: string;
       slots: { startTime: string; endTime: string }[];
-    }
+    },
   ): Promise<{ data: Booking }> => {
     const response = await api.post(`${URI}/slot/${id}/reserve`, body);
     return {
@@ -65,10 +65,23 @@ export const ServiceService = {
 
   confirmPayment: async (
     id: number,
-    body: { method: string; note: string }
+    body: { method: string; note: string },
   ): Promise<any> => {
     const response = await api.post(`${BOOKING_URI}/${id}/paid`, body);
     return response.data;
+  },
+
+  createPaymentForBooking: async (
+    id: number,
+    paymentMethod: string,
+  ): Promise<any> => {
+    const response = await api.post(`${BOOKING_URI}/${id}/payment`, {
+      targetType: "BOOKING",
+      targetId: id,
+      paymentMethod,
+      deviceType: "mobile",
+    });
+    return response.data.data || response.data;
   },
 };
 
@@ -79,7 +92,7 @@ const mapServiceData = (raw: any): Service => {
     description: raw.description,
     open_hour: raw.openHour?.slice(0, 5), // "08:00:00" -> "08:00"
     close_hour: raw.closeHour?.slice(0, 5), // "20:00:00" -> "20:00"
-    url: raw.imageUrl ?? '',
+    url: raw.imageUrl ?? "",
     unit_price: raw.unitPrice,
     unit: raw.unitTimeBlock,
     total_slot: raw.totalSlot,
@@ -90,9 +103,9 @@ const mapServiceData = (raw: any): Service => {
 };
 
 const formatTime = (iso: string) =>
-  new Date(iso).toLocaleTimeString('vi-VN', {
-    hour: '2-digit',
-    minute: '2-digit',
+  new Date(iso).toLocaleTimeString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
     hour12: false,
   });
 

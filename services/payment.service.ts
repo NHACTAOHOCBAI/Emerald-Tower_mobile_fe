@@ -5,6 +5,8 @@ export interface CreatePaymentRequest {
   targetType: "INVOICE" | "BOOKING";
   targetId: number;
   paymentMethod: "MOMO" | "VNPAY";
+  deviceType?: "web" | "mobile" | "ios" | "android";
+  redirectUrl?: string;
 }
 
 export interface CreatePaymentResponse {
@@ -35,12 +37,22 @@ export interface PaymentStatusResponse {
 
 /**
  * Tạo giao dịch thanh toán
+ * @param data - Payment data with deviceType for deep linking (mobile-specific)
+ * @throws Error if API request fails
  */
 export const createPayment = async (
   data: CreatePaymentRequest,
 ): Promise<CreatePaymentResponse> => {
-  const response = await api.post<{ data: CreatePaymentResponse }>("/payments", data);
-  return response.data.data;
+  try {
+    const response = await api.post<{ data: CreatePaymentResponse }>(
+      "/payments",
+      data,
+    );
+    return response.data.data;
+  } catch (error) {
+    console.error("[Payment] Failed to create payment:", error);
+    throw error;
+  }
 };
 
 /**

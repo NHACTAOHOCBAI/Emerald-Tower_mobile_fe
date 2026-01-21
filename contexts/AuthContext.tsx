@@ -1,7 +1,5 @@
-import type { ReactNode } from "react";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import type { AuthUser } from "@/types/auth";
 import { getProfile, login as loginRequest } from "@/services/auth";
+import type { AuthUser } from "@/types/auth";
 import {
   clearAuthStorage,
   getAccessToken,
@@ -9,6 +7,8 @@ import {
   setStoredUser,
   setTokens,
 } from "@/utils/auth-storage";
+import type { ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -72,14 +72,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    await clearAuthStorage();
-    setUser(null);
+    try {
+      await clearAuthStorage();
+      setUser(null);
+    } catch (error) {
+      console.error("[Auth] Logout error:", error);
+      setUser(null);
+    }
   };
 
   const refreshProfile = async () => {
-    const profile = await getProfile();
-    await setStoredUser(profile);
-    setUser(profile);
+    try {
+      const profile = await getProfile();
+      await setStoredUser(profile);
+      setUser(profile);
+    } catch (error) {
+      console.error("[Auth] Refresh profile error:", error);
+      throw error;
+    }
   };
 
   const value = useMemo(

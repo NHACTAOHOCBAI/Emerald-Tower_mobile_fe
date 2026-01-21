@@ -40,12 +40,14 @@ export interface PaymentTransaction {
 }
 
 /**
- * Create Payment Request
+ * Create Payment Request - with deep link support
  */
 export interface CreatePaymentRequest {
   targetType: PaymentTargetType | "INVOICE" | "BOOKING";
   targetId: number;
   paymentMethod: PaymentGateway | "MOMO" | "VNPAY";
+  deviceType?: "web" | "mobile" | "ios" | "android";
+  redirectUrl?: string;
 }
 
 /**
