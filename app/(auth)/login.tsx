@@ -64,7 +64,7 @@ export default function LoginScreen() {
           <Text className="text-sm font-semibold text-gray-700 mb-2">Email</Text>
           <BaseInput
             value={email}
-            placeholder="example@example"
+            placeholder="Nhập email"
             keyboardType="email-address"
             onChangeText={(t) => {
               setEmail(t);
@@ -89,7 +89,7 @@ export default function LoginScreen() {
           <Text className="text-sm font-semibold text-gray-700 mb-2">Mật khẩu</Text>
           <BaseInput
             value={password}
-            placeholder="Enter password"
+            placeholder="Nhập mật khẩu"
             isPassword
             onChangeText={(t) => {
               setPassword(t);
