@@ -1,3 +1,8 @@
+import MomoIcon from "@/assets/images/momo-icon";
+import VNPayIcon from "@/assets/images/vnpay-icon";
+import MyButton from "@/components/ui/Button";
+import { CustomHeader } from "@/components/ui/CustomHeader";
+import { createBatchPayment, createPayment } from "@/services/payment.service";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AlertCircle, CreditCard } from "lucide-react-native";
 import { useState } from "react";
@@ -9,12 +14,6 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-import MomoIcon from "@/assets/images/momo-icon";
-import VNPayIcon from "@/assets/images/vnpay-icon";
-import MyButton from "@/components/ui/Button";
-import { CustomHeader } from "@/components/ui/CustomHeader";
-import { createPayment } from "@/services/payment.service";
 
 type PaymentMethod = "vnpay" | "momo";
 
@@ -223,18 +222,32 @@ export default function PaymentMethodScreen() {
       console.log("✅ Creating payment:", {
         targetType,
         targetId,
+        invoiceIdsLength: invoiceIds.length,
         paymentMethod: selectedMethod.toUpperCase(),
         amount: totalAmount,
       });
 
       // ✅ CREATE PAYMENT API CALL
-      const paymentResponse = await createPayment({
-        targetType: targetType === "INVOICE" ? "INVOICE" : "BOOKING",
-        targetId: Number(targetId),
-        paymentMethod: selectedMethod.toUpperCase() as "MOMO" | "VNPAY",
-        deviceType: "mobile", // Specify mobile for proper redirect handling
-        // Don't use custom deep link - let backend handle redirect URL
-      });
+      let paymentResponse;
+
+      // Use batch API if multiple invoices, single API for single or booking
+      if (targetType === "INVOICE" && invoiceIds.length > 1) {
+        console.log("📦 Using BATCH API for", invoiceIds.length, "invoices");
+        paymentResponse = await createBatchPayment({
+          targetType: "INVOICE",
+          targetIds: invoiceIds,
+          paymentMethod: selectedMethod.toUpperCase() as "MOMO" | "VNPAY",
+          deviceType: "mobile",
+        });
+      } else {
+        console.log("📦 Using SINGLE API for 1 item");
+        paymentResponse = await createPayment({
+          targetType: targetType === "INVOICE" ? "INVOICE" : "BOOKING",
+          targetId: Number(targetId),
+          paymentMethod: selectedMethod.toUpperCase() as "MOMO" | "VNPAY",
+          deviceType: "mobile",
+        });
+      }
 
       console.log("✅ Payment created successfully:", paymentResponse);
 

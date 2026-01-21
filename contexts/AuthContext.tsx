@@ -7,9 +7,9 @@ import type { AuthUser } from "@/types/auth";
 import {
   clearAuthStorage,
   getAccessToken,
-
-
+  getStoredUser,
   setAccessToken,
+  setStoredUser,
 } from "@/utils/auth-storage";
 import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";

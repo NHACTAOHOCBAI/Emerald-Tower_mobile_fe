@@ -9,6 +9,14 @@ export interface CreatePaymentRequest {
   redirectUrl?: string;
 }
 
+export interface CreateBatchPaymentRequest {
+  targetType: "INVOICE" | "BOOKING";
+  targetIds: number[];
+  paymentMethod: "MOMO" | "VNPAY";
+  deviceType?: "web" | "mobile" | "ios" | "android";
+  redirectUrl?: string;
+}
+
 export interface CreatePaymentResponse {
   id: number;
   txnRef: string;
@@ -17,6 +25,8 @@ export interface CreatePaymentResponse {
   paymentMethod: string;
   status: string;
   createdAt: string;
+  batchIds?: number[];
+  itemCount?: number;
 }
 
 export interface PaymentStatusResponse {
@@ -51,6 +61,26 @@ export const createPayment = async (
     return response.data.data;
   } catch (error) {
     console.error("[Payment] Failed to create payment:", error);
+    throw error;
+  }
+};
+
+/**
+ * Tạo giao dịch thanh toán batch (nhiều hóa đơn/booking)
+ * @param data - Batch payment data with multiple targetIds
+ * @throws Error if API request fails
+ */
+export const createBatchPayment = async (
+  data: CreateBatchPaymentRequest,
+): Promise<CreatePaymentResponse> => {
+  try {
+    const response = await api.post<{ data: CreatePaymentResponse }>(
+      "/payments/batch",
+      data,
+    );
+    return response.data.data;
+  } catch (error) {
+    console.error("[Payment] Failed to create batch payment:", error);
     throw error;
   }
 };
