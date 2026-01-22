@@ -157,7 +157,7 @@ export default function RatingScreen() {
           </View>
 
           <MyButton
-            className={`py-4 rounded-lg center ${
+            className={`w-full py-4 rounded-lg center ${
               rating > 0 ? 'bg-[#244B35]' : 'bg-gray-300'
             }`}
             disabled={rating === 0}
@@ -165,7 +165,7 @@ export default function RatingScreen() {
             onPress={handleSubmitRating}
             isLoading={rateMutation.isPending}
           >
-            Gửi
+            Gửi đánh giá
           </MyButton>
         </View>
       </ScrollView>
