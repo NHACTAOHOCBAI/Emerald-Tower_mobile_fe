@@ -209,7 +209,7 @@ export default function BookingDetailScreen() {
 
               <View className="flex-row justify-between">
                 <Text className="text-sm text-gray-500">Thời gian</Text>
-                <View className="flex-row flex-wrap gap-2">
+                <View className="flex-1 flex-row flex-wrap gap-2 justify-end">
                   {booking.timestamps.map(
                     (
                       slot: { startTime: string; endTime: string },
