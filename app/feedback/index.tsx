@@ -134,7 +134,7 @@ export default function FeedbackScreen() {
 
       <TouchableOpacity
         onPress={handleCreateFeedback}
-        className="absolute bottom-8 right-5 w-16 h-16 bg-[#244B35] rounded-full items-center justify-center shadow-lg"
+        className="absolute bottom-20 right-5 w-16 h-16 bg-[#244B35] rounded-full items-center justify-center shadow-lg"
         style={{
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },

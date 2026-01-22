@@ -1,3 +1,4 @@
+import MyButton from '@/components/ui/Button';
 import { CustomHeader } from '@/components/ui/CustomHeader';
 import { FeedbackService } from '@/services/feedback.service';
 import {
@@ -19,6 +20,7 @@ import {
   Paperclip,
   Star,
 } from 'lucide-react-native';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -37,6 +39,7 @@ export default function FeedbackDetailScreen() {
     queryKey: ['feedback', id],
     queryFn: () => FeedbackService.getById(Number(id)),
   });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = () => {
     Alert.alert('Xác nhận', 'Bạn có chắc muốn xóa phản ánh này?', [
@@ -45,6 +48,7 @@ export default function FeedbackDetailScreen() {
         text: 'Xóa',
         style: 'destructive',
         onPress: async () => {
+          setIsDeleting(true);
           try {
             await FeedbackService.delete(Number(id));
             router.back();
@@ -55,6 +59,8 @@ export default function FeedbackDetailScreen() {
               'Lỗi',
               e.data.data.message || 'Không thể xóa phản ánh đang được xử lý'
             );
+          } finally {
+            setIsDeleting(false);
           }
         },
       },
@@ -301,14 +307,14 @@ export default function FeedbackDetailScreen() {
           )}
 
           {feedback.status === 'PENDING' && (
-            <TouchableOpacity
+            <MyButton
+              className=" w-full bg-red-500 p-4 rounded-lg m-4"
+              textClassName="text-white text-center font-bold "
               onPress={handleDelete}
-              className="bg-red-500 p-4 rounded-lg m-4"
+              isLoading={isDeleting}
             >
-              <Text className="text-white text-center font-bold">
-                Xóa phản ánh
-              </Text>
-            </TouchableOpacity>
+              Xóa phản ánh
+            </MyButton>
           )}
         </View>
       </ScrollView>
