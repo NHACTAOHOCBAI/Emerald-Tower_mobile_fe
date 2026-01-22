@@ -138,22 +138,27 @@ export default function FeedbackDetailScreen() {
             </Text>
           </View>
 
-          <View className="bg-white rounded-lg p-4 mb-4">
-            <View className="flex-row items-center mb-3">
-              <MapPin size={16} color="#6B7280" />
-              <Text className="text-sm font-semibold text-gray-700 ml-2">
-                Vị trí sự cố
-              </Text>
-            </View>
-            <Text className="text-sm text-gray-600">
-              {feedback.block?.name} · Tầng {feedback.floor}
-            </Text>
-            {feedback.detailLocation && (
+          {feedback.block && (
+            <View className="bg-white rounded-lg p-4 mb-4">
+              <View className="flex-row items-center mb-3">
+                <MapPin size={16} color="#6B7280" />
+                <Text className="text-sm font-semibold text-gray-700 ml-2">
+                  Vị trí sự cố
+                </Text>
+              </View>
+
               <Text className="text-sm text-gray-600">
-                {feedback.detailLocation}
+                {feedback.block?.name}{' '}
+                {feedback.floor && <Text>· Tầng {feedback.floor}</Text>}
               </Text>
-            )}
-          </View>
+
+              {feedback.detailLocation && (
+                <Text className="text-sm text-gray-600">
+                  {feedback.detailLocation}
+                </Text>
+              )}
+            </View>
+          )}
 
           {feedback.fileUrls.length > 0 && (
             <View className="bg-white rounded-lg p-4 mb-4">
