@@ -1,13 +1,14 @@
-import { showNotificationActionsSheet } from '@/components/notification/NotificationActionSheet';
-import NotificationCard from '@/components/notification/NotificationCard';
-import NotificationTabs from '@/components/notification/NotificationTabs';
-import { CustomHeader } from '@/components/ui/CustomHeader';
-import { NotificationService } from '@/services/notification.service';
-import { Notification } from '@/types/notification';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { router } from 'expo-router';
-import { CheckCircle, Search, Trash2 } from 'lucide-react-native';
-import { useState } from 'react';
+import { showNotificationActionsSheet } from "@/components/notification/NotificationActionSheet";
+import NotificationCard from "@/components/notification/NotificationCard";
+import NotificationTabs from "@/components/notification/NotificationTabs";
+import SummarizeModal from "@/components/notification/SummarizeModal";
+import { CustomHeader } from "@/components/ui/CustomHeader";
+import { NotificationService } from "@/services/notification.service";
+import { Notification } from "@/types/notification";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { router } from "expo-router";
+import { CheckCircle, Search, Trash2 } from "lucide-react-native";
+import { useState } from "react";
 import {
   ActivityIndicator,
   RefreshControl,
@@ -16,12 +17,17 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function NotificationScreen() {
-  const [activeTab, setActiveTab] = useState<string>('ALL');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<string>("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSummarizeModal, setShowSummarizeModal] = useState(false);
+  const [
+    selectedNotificationForSummarize,
+    setSelectedNotificationForSummarize,
+  ] = useState<Notification | null>(null);
   const queryClient = useQueryClient();
 
   const {
@@ -29,7 +35,7 @@ export default function NotificationScreen() {
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ['notifications'],
+    queryKey: ["notifications"],
     queryFn: async () => {
       const response = await NotificationService.getMine();
       return response.data;
@@ -39,32 +45,32 @@ export default function NotificationScreen() {
   const readAllMutation = useMutation({
     mutationFn: NotificationService.readAll,
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+      queryClient.invalidateQueries({ queryKey: ["notifications"] }),
   });
 
   const hideAllMutation = useMutation({
     mutationFn: NotificationService.hideAll,
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+      queryClient.invalidateQueries({ queryKey: ["notifications"] }),
   });
 
   const toggleReadMutation = useMutation({
     mutationFn: (id: number) => NotificationService.toggleRead(id),
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+      queryClient.invalidateQueries({ queryKey: ["notifications"] }),
   });
 
   const hideMutation = useMutation({
     mutationFn: (id: number) => NotificationService.hide(id),
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+      queryClient.invalidateQueries({ queryKey: ["notifications"] }),
   });
 
   const filteredNotifications = notifications.filter((noti: Notification) => {
-    const matchesTab = activeTab === 'ALL' || noti.type === activeTab;
+    const matchesTab = activeTab === "ALL" || noti.type === activeTab;
 
     const matchesSearch =
-      searchQuery === '' ||
+      searchQuery === "" ||
       noti.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       noti.content.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -83,7 +89,7 @@ export default function NotificationScreen() {
 
   const handlePressNotification = (notification: Notification) => {
     router.push({
-      pathname: '/notification/[id]',
+      pathname: "/notification/[id]",
       params: { id: notification.id },
     });
   };
@@ -94,6 +100,10 @@ export default function NotificationScreen() {
       onToggleRead: async () =>
         await toggleReadMutation.mutateAsync(notification.id),
       onHide: async () => await hideMutation.mutateAsync(notification.id),
+      onSummarize: () => {
+        setSelectedNotificationForSummarize(notification);
+        setShowSummarizeModal(true);
+      },
     });
   };
 
@@ -168,6 +178,13 @@ export default function NotificationScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* Summarize Modal */}
+      <SummarizeModal
+        visible={showSummarizeModal}
+        initialText={selectedNotificationForSummarize?.content || ""}
+        onClose={() => setShowSummarizeModal(false)}
+      />
     </SafeAreaView>
   );
 }

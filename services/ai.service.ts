@@ -15,11 +15,17 @@ export const scanMeterImage = async (imageUri: string): Promise<string> => {
     type: type,
   } as any);
 
-  // Note: The API endpoint in your image is /api/v1/ai/ocr/read-meter
-  // Adjust the base URL or path if your 'api' instance has a prefix.
-  const response = await api.post<{ data: OCRResponse }>("/ai/ocr/read-meter", formData, {
+  // API endpoint: /ai/ocr/read-meter (relative path)
+  // api instance baseURL = http://10.113.48.185:4000/api/v1
+  // Final URL: http://10.113.48.185:4000/api/v1/ai/ocr/read-meter
+  const response = await api.post<any>("/ai/ocr/read-meter", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
 
-  return response.data.data.meter_reading;
+  // Backend response is wrapped by TransformInterceptor
+  // { data: OCRResponse, message, statusCode, ... }
+  // We need to unpack response.data.data
+  const ocrData: OCRResponse = response.data?.data || response.data;
+
+  return ocrData.meter_reading;
 };

@@ -1,18 +1,21 @@
-import { showNotificationActionsSheet } from '@/components/notification/NotificationActionSheet';
-import { CustomHeader } from '@/components/ui/CustomHeader';
-import { NotificationService } from '@/services/notification.service';
-import { getNotiTypeColor, getNotiTypeLabel } from '@/types/notification';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
-import { router, useLocalSearchParams } from 'expo-router';
+import { showNotificationActionsSheet } from "@/components/notification/NotificationActionSheet";
+import SummarizeModal from "@/components/notification/SummarizeModal";
+import { CustomHeader } from "@/components/ui/CustomHeader";
+import { NotificationService } from "@/services/notification.service";
+import { getNotiTypeColor, getNotiTypeLabel } from "@/types/notification";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import { router, useLocalSearchParams } from "expo-router";
 import {
   AlertCircle,
   Clock,
   Download,
   MapPin,
   MoreVertical,
-} from 'lucide-react-native';
+  Sparkles,
+} from "lucide-react-native";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Linking,
@@ -20,15 +23,16 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function NotificationDetailScreen() {
   const { id } = useLocalSearchParams();
   const queryClient = useQueryClient();
+  const [showSummarizeModal, setShowSummarizeModal] = useState(false);
 
   const { data: notification, isLoading } = useQuery({
-    queryKey: ['notification', id],
+    queryKey: ["notification", id],
     queryFn: async () => {
       const response = await NotificationService.getById(Number(id));
       return response.data;
@@ -39,15 +43,15 @@ export default function NotificationDetailScreen() {
   const toggleReadMutation = useMutation({
     mutationFn: () => NotificationService.toggleRead(Number(id)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notification', id] });
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ["notification", id] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 
   const hideMutation = useMutation({
     mutationFn: () => NotificationService.hide(Number(id)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
       if (router.canGoBack()) {
         router.back();
       }
@@ -72,7 +76,7 @@ export default function NotificationDetailScreen() {
   const formattedDate = format(
     new Date(notification?.published_at || notification.created_at),
     "HH:mm, 'ngày' dd/MM/yyyy",
-    { locale: vi }
+    { locale: vi },
   );
 
   const handleDownload = (url: string) => {
@@ -103,7 +107,7 @@ export default function NotificationDetailScreen() {
           <View className="flex-row items-center mb-4">
             <View
               className="px-3 py-1.5 rounded-full"
-              style={{ backgroundColor: typeColor + '20' }}
+              style={{ backgroundColor: typeColor + "20" }}
             >
               <Text
                 className="text-sm font-semibold"
@@ -126,6 +130,22 @@ export default function NotificationDetailScreen() {
             {notification.title}
           </Text>
 
+          {/* Summarize Button */}
+          <TouchableOpacity
+            onPress={() => setShowSummarizeModal(true)}
+            className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-lg p-4 mb-4 flex-row items-center"
+          >
+            <Sparkles size={20} color="#4F46E5" />
+            <View className="flex-1 ml-3">
+              <Text className="text-sm font-semibold text-indigo-900">
+                Tóm tắt thông báo
+              </Text>
+              <Text className="text-xs text-indigo-700 mt-0.5">
+                Sử dụng AI để trích xuất thông tin quan trọng
+              </Text>
+            </View>
+          </TouchableOpacity>
+
           <View className="bg-white rounded-lg p-4 mb-4">
             <View className="flex-row items-center mb-3">
               <Clock size={16} color="#6B7280" />
@@ -139,8 +159,8 @@ export default function NotificationDetailScreen() {
                 <MapPin size={16} color="#6B7280" className="mt-0.5" />
                 <View className="flex-1 ml-2">
                   <Text className="text-sm text-gray-600">
-                    Áp dụng cho:{' '}
-                    {notification.target_blocks.map((b) => b.name).join(', ')}
+                    Áp dụng cho:{" "}
+                    {notification.target_blocks.map((b) => b.name).join(", ")}
                   </Text>
                 </View>
               </View>
@@ -161,7 +181,7 @@ export default function NotificationDetailScreen() {
               </Text>
               {notification.file_urls.map((url, index) => {
                 const fileName =
-                  url.split('/').pop()?.split('?')[0] ||
+                  url.split("/").pop()?.split("?")[0] ||
                   `Tài liệu ${index + 1}`;
                 return (
                   <TouchableOpacity
@@ -181,11 +201,18 @@ export default function NotificationDetailScreen() {
 
           <View className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <Text className="text-xs text-blue-700">
-              Thông báo đã được gửi qua: {notification.channels.join(', ')}
+              Thông báo đã được gửi qua: {notification.channels.join(", ")}
             </Text>
           </View>
         </View>
       </ScrollView>
+
+      {/* Summarize Modal */}
+      <SummarizeModal
+        visible={showSummarizeModal}
+        initialText={notification.content}
+        onClose={() => setShowSummarizeModal(false)}
+      />
     </SafeAreaView>
   );
 }

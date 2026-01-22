@@ -2,20 +2,20 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { AlertCircle, CheckCircle, Copy, Share2 } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    Clipboard,
-    ScrollView,
-    Share,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Clipboard,
+  ScrollView,
+  Share,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { CustomHeader } from "@/components/ui/CustomHeader";
 import {
-    getPaymentByTxnRef,
-    PaymentStatusResponse,
+  getPaymentByTxnRef,
+  PaymentStatusResponse,
 } from "@/services/payment.service";
 
 export default function PaymentResultScreen() {
@@ -259,7 +259,7 @@ export default function PaymentResultScreen() {
         {/* Primary Button */}
         <TouchableOpacity
           onPress={handleBackToPayment}
-          className="w-full bg-main rounded-lg p-4 items-center justify-center mb-4"
+          className="w-full bg-main rounded-lg p-4 items-center justify-center mb-10"
         >
           <Text className="text-white font-bold text-base">
             Quay lại trang thanh toán

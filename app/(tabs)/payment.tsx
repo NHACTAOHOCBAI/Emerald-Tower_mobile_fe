@@ -1,7 +1,13 @@
 import { useRouter } from "expo-router";
 import { BarChart3, Plus } from "lucide-react-native";
 import { useMemo, useState } from "react";
-import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  RefreshControl,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { InvoiceHistoryItem } from "@/components/payment/InvoiceHistoryItem";
@@ -37,37 +43,42 @@ export default function PaymentScreen() {
   }, [invoices, selectedApartment]);
 
   // tính tổng nợ, hạn theo danh sách đã lọc
-  const { totalDebt, invoiceCount, nearestDueDate, activeInvoiceIds } = useMemo(() => {
-    const activeInvoices = filteredInvoices.filter(
-      (item) => item.status === "UNPAID" || item.status === "OVERDUE",
-    );
+  const { totalDebt, invoiceCount, nearestDueDate, activeInvoiceIds } =
+    useMemo(() => {
+      const activeInvoices = filteredInvoices.filter(
+        (item) => item.status === "UNPAID" || item.status === "OVERDUE",
+      );
 
-    const total = activeInvoices.reduce((sum, item) => sum + Number(item.totalAmount), 0);
+      const total = activeInvoices.reduce(
+        (sum, item) => sum + Number(item.totalAmount),
+        0,
+      );
 
-    // tìm hạn gần nhất
-    let nearest = null;
-    if (activeInvoices.length > 0) {
-      // lấy item có due date hợp lệ
-      const validDateInvoices = activeInvoices.filter((item) => item.dueDate);
+      // tìm hạn gần nhất
+      let nearest: string | null = null;
+      if (activeInvoices.length > 0) {
+        // lấy item có due date hợp lệ
+        const validDateInvoices = activeInvoices.filter((item) => item.dueDate);
 
-      if (validDateInvoices.length > 0) {
-        const sortedByDate = [...validDateInvoices].sort(
-          (a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime(),
-        );
-        const d = new Date(sortedByDate[0].dueDate!);
-        const day = String(d.getDate()).padStart(2, "0");
-        const month = String(d.getMonth() + 1).padStart(2, "0");
-        nearest = `${day}/${month}/${d.getFullYear()}`;
+        if (validDateInvoices.length > 0) {
+          const sortedByDate = [...validDateInvoices].sort(
+            (a, b) =>
+              new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime(),
+          );
+          const d = new Date(sortedByDate[0].dueDate!);
+          const day = String(d.getDate()).padStart(2, "0");
+          const month = String(d.getMonth() + 1).padStart(2, "0");
+          nearest = `${day}/${month}/${d.getFullYear()}`;
+        }
       }
-    }
 
-    return {
-      totalDebt: Math.round(total),
-      invoiceCount: activeInvoices.length,
-      nearestDueDate: nearest,
-      activeInvoiceIds: activeInvoices.map((inv) => inv.id),
-    };
-  }, [filteredInvoices]);
+      return {
+        totalDebt: Math.round(total),
+        invoiceCount: activeInvoices.length,
+        nearestDueDate: nearest,
+        activeInvoiceIds: activeInvoices.map((inv) => inv.id),
+      };
+    }, [filteredInvoices]);
 
   return (
     <SafeAreaView className="flex-1 bg-[#F3F4F6]">
@@ -78,12 +89,16 @@ export default function PaymentScreen() {
       <ScrollView
         className="flex-1 px-4 pt-2"
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
+        refreshControl={
+          <RefreshControl refreshing={isLoading} onRefresh={refetch} />
+        }
       >
         {/* lọc căn hộ */}
         {apartmentList.length > 0 && (
           <View className="mb-4">
-            <Text className="text-xs text-gray-500 mb-2 ml-1">Lọc theo căn hộ:</Text>
+            <Text className="text-xs text-gray-500 mb-2 ml-1">
+              Lọc theo căn hộ:
+            </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <TouchableOpacity
                 onPress={() => setSelectedApartment("all")}
@@ -114,7 +129,9 @@ export default function PaymentScreen() {
                 >
                   <Text
                     className={`text-[11px] font-bold ${
-                      selectedApartment === aptName ? "text-white" : "text-gray-600"
+                      selectedApartment === aptName
+                        ? "text-white"
+                        : "text-gray-600"
                     }`}
                   >
                     {aptName}
@@ -126,7 +143,9 @@ export default function PaymentScreen() {
         )}
 
         <View className="bg-main rounded-2xl p-5 mb-5 shadow-sm">
-          <Text className="text-gray-300 text-[12px] mb-1">Tổng nợ hiện tại</Text>
+          <Text className="text-gray-300 text-[12px] mb-1">
+            Tổng nợ hiện tại
+          </Text>
           <Text className="text-white text-3xl font-bold mb-1">
             {totalDebt.toLocaleString("vi-VN")} đ
           </Text>

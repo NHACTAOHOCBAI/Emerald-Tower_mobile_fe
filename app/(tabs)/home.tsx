@@ -1,13 +1,17 @@
-import { NotificationService } from '@/services/notification.service';
+import { useResidentProfile } from "@/hooks/useResident";
+import { FeedbackService } from "@/services/feedback.service";
+import { getResidentInvoices } from "@/services/invoice.service";
+import { NotificationService } from "@/services/notification.service";
+import { ServiceService } from "@/services/service.service";
 import {
   getNotiTypeColor,
   getNotiTypeLabel,
   Notification,
-} from '@/types/notification';
-import { useQuery } from '@tanstack/react-query';
-import { formatDistanceToNow } from 'date-fns';
-import { vi } from 'date-fns/locale';
-import { router } from 'expo-router';
+} from "@/types/notification";
+import { useQuery } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+import { vi } from "date-fns/locale";
+import { router } from "expo-router";
 import {
   Bell,
   Building,
@@ -16,7 +20,7 @@ import {
   Search,
   Vote,
   Wrench,
-} from 'lucide-react-native';
+} from "lucide-react-native";
 import {
   ActivityIndicator,
   Image,
@@ -24,19 +28,21 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
-  // Mock user data
+  // Fetch resident profile data
+  const { data: profile } = useResidentProfile();
+
   const user = {
-    name: 'NGUYỄN LƯU LY',
-    avatar: 'https://i.pravatar.cc/150?img=12',
+    name: profile?.fullName?.toUpperCase() || "Tài khoản",
+    avatar: profile?.imageUrl || "https://i.pravatar.cc/150?img=12",
     hasUnreadNotifications: true,
   };
 
   const { data: notifications = [], isLoading } = useQuery<Notification[]>({
-    queryKey: ['notifications-home'],
+    queryKey: ["notifications-home"],
     queryFn: async () => {
       const response = await NotificationService.getMine();
       return response.data;
@@ -46,43 +52,117 @@ export default function HomeScreen() {
         .sort(
           (a, b) =>
             new Date(b?.published_at || b.created_at).getTime() -
-            new Date(a?.published_at || a.created_at).getTime()
+            new Date(a?.published_at || a.created_at).getTime(),
         )
         .slice(0, 2);
     },
     staleTime: 5 * 60 * 1000,
   });
 
+  // Fetch invoices
+  const { data: invoices = [] } = useQuery({
+    queryKey: ["invoices-home"],
+    queryFn: async () => {
+      try {
+        const response = await getResidentInvoices();
+        return response || [];
+      } catch (error) {
+        console.error("Failed to fetch invoices:", error);
+        return [];
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch feedback
+  const { data: feedbacks = [] } = useQuery({
+    queryKey: ["feedbacks-home"],
+    queryFn: async () => {
+      try {
+        const response = await FeedbackService.getMine();
+        return response || [];
+      } catch (error) {
+        console.error("Failed to fetch feedbacks:", error);
+        return [];
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch services
+  const { data: servicesData = { data: [] } } = useQuery({
+    queryKey: ["services-home"],
+    queryFn: async () => {
+      try {
+        const response = await ServiceService.get();
+        return response;
+      } catch (error) {
+        console.error("Failed to fetch services:", error);
+        return { data: [] };
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const unreadCount = notifications.filter((noti) => !noti.is_read).length;
 
-  // Important items (mock data)
+  // Build important items from API data
   const importantItems = [
     {
       id: 1,
       icon: CreditCard,
-      title: '2 hóa đơn',
-      subtitle: 'Hạn nộp gần nhất: 30/11/2025',
-      status: 'Thanh toán',
-      statusColor: 'bg-green-600',
-      route: '/payment',
+      title: `${invoices.length || 0} hóa đơn`,
+      subtitle:
+        invoices.length > 0
+          ? `Hạn nộp gần nhất: ${new Date(invoices[0]?.dueDate || Date.now()).toLocaleDateString("vi-VN")}`
+          : "Không có hóa đơn",
+      status:
+        invoices.filter((inv: any) => inv.status === "pending").length > 0
+          ? "Thanh toán"
+          : "Đã thanh toán",
+      statusColor:
+        invoices.filter((inv: any) => inv.status === "pending").length > 0
+          ? "bg-green-600"
+          : "bg-blue-600",
+      route: "/(tabs)/payment",
     },
     {
       id: 2,
       icon: MessageSquare,
-      title: '1 phản ánh',
-      subtitle: 'Cập nhận lần cuối: 14h · 21/11/2025',
-      status: 'Đang xử lý',
-      statusColor: 'bg-orange-500',
-      route: '/feedback',
+      title: `${feedbacks.length || 0} phản ánh`,
+      subtitle:
+        feedbacks.length > 0
+          ? `Cập nhập lần cuối: ${formatDistanceToNow(new Date(feedbacks[0]?.createdAt), { addSuffix: true, locale: vi })}`
+          : "Không có phản ánh",
+      status:
+        feedbacks.filter((fb: any) => fb.status !== "resolved").length > 0
+          ? "Đang xử lý"
+          : "Đã hoàn thành",
+      statusColor:
+        feedbacks.filter((fb: any) => fb.status !== "resolved").length > 0
+          ? "bg-orange-500"
+          : "bg-green-600",
+      route: "/feedback",
     },
     {
       id: 3,
       icon: Wrench,
-      title: '3 dịch vụ',
-      subtitle: 'Hết hạn gần nhất: 28/11/2025',
-      status: 'Sắp hết hạn',
-      statusColor: 'bg-orange-500',
-      route: '/service',
+      title: `${servicesData.data.length || 0} dịch vụ`,
+      subtitle:
+        servicesData.data.length > 0
+          ? `Tổng tiền: ${new Intl.NumberFormat("vi-VN", {
+              style: "currency",
+              currency: "VND",
+            }).format(
+              servicesData.data.reduce(
+                (sum: number, service: any) => sum + (service.price || 0),
+                0,
+              ),
+            )}`
+          : "Không có dịch vụ",
+      status: "Quản lý",
+      statusColor: "bg-orange-500",
+      route: "/(tabs)/service",
     },
   ];
 
@@ -91,32 +171,32 @@ export default function HomeScreen() {
     {
       id: 1,
       icon: Wrench,
-      label: 'Ví dịch vụ',
-      route: '/service/bookings',
+      label: "Ví dịch vụ",
+      route: "/service/bookings",
     },
     {
       id: 2,
       icon: MessageSquare,
-      label: 'Phản ánh',
-      route: '/feedback',
+      label: "Phản ánh",
+      route: "/feedback",
     },
     {
       id: 3,
       icon: Building,
-      label: 'Căn hộ của tôi',
-      route: '/apartment',
+      label: "Thông tin của tôi",
+      route: "/(tabs)/information",
     },
     {
       id: 4,
       icon: Vote,
-      label: 'Biểu quyết',
-      route: '/voting',
+      label: "Biểu quyết",
+      route: "/voting",
     },
   ];
 
   const handlePressNotification = (id: number) => {
     router.push({
-      pathname: '/notification/[id]',
+      pathname: "/notification/[id]",
       params: { id },
     });
   };
@@ -131,7 +211,7 @@ export default function HomeScreen() {
               <Search size={24} color="white" />
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => router.push('/notification' as any)}
+              onPress={() => router.push("/notification" as any)}
               className="relative"
             >
               <Bell size={24} color="white" />
@@ -166,7 +246,10 @@ export default function HomeScreen() {
               Đã đến hạn nhập chỉ số điện, nước! Vui lòng thực hiện
             </Text>
 
-            <TouchableOpacity className="bg-[#F5F5DC] py-3 rounded-lg">
+            <TouchableOpacity
+              onPress={() => router.push("/payment/input-meter" as any)}
+              className="bg-[#F5F5DC] py-3 rounded-lg"
+            >
               <Text className="text-center text-[#244B35] font-semibold">
                 + Thêm chỉ số
               </Text>
@@ -179,7 +262,7 @@ export default function HomeScreen() {
           <View className="flex-row items-center justify-between mb-3">
             <Text className="text-base font-bold text-[#D2691E]">Mới</Text>
             <TouchableOpacity
-              onPress={() => router.push('/notification' as any)}
+              onPress={() => router.push("/notification" as any)}
             >
               <Text className="text-sm text-gray-600">Xem tất cả →</Text>
             </TouchableOpacity>
@@ -196,7 +279,7 @@ export default function HomeScreen() {
                 {
                   addSuffix: true,
                   locale: vi,
-                }
+                },
               );
               const typeColor = getNotiTypeColor(noti.type);
               return (
@@ -211,7 +294,7 @@ export default function HomeScreen() {
                     </Text>
                     <View
                       className="px-2 py-1 rounded"
-                      style={{ backgroundColor: typeColor + '20' }}
+                      style={{ backgroundColor: typeColor + "20" }}
                     >
                       <Text
                         className="text-xs font-medium"
@@ -276,7 +359,7 @@ export default function HomeScreen() {
                 key={shortcut.id}
                 onPress={() => router.push(shortcut.route as any)}
                 className="bg-white rounded-lg p-4 items-center justify-center shadow-sm"
-                style={{ width: '47%' }}
+                style={{ width: "47%" }}
               >
                 <View className="bg-gray-100 p-4 rounded-full mb-3">
                   <shortcut.icon size={28} color="#244B35" />

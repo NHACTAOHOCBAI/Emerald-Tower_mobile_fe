@@ -7,11 +7,11 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { AlertCircle, CreditCard } from "lucide-react-native";
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -313,7 +313,7 @@ export default function PaymentMethodScreen() {
             Số tiền cần thanh toán
           </Text>
           <Text className="text-white text-3xl font-bold">
-            {totalAmount.toLocaleString("vi-VN")} đ
+            {Math.round(totalAmount).toLocaleString("vi-VN")} đ
           </Text>
         </View>
 
@@ -333,85 +333,66 @@ export default function PaymentMethodScreen() {
           Chọn phương thức thanh toán
         </Text>
 
-        {/* VNPay Option */}
-        <TouchableOpacity
-          onPress={() => {
-            setSelectedMethod("vnpay");
-            setError(null);
-          }}
-          disabled={isLoading}
-          className="bg-white p-4 rounded-xl mb-4 flex-row items-center border shadow-sm"
-          style={{
-            borderColor: selectedMethod === "vnpay" ? "#E09B6B" : "#F3F4F6",
-            borderWidth: 2,
-            opacity: isLoading ? 0.6 : 1,
-          }}
-        >
-          <View className="w-12 h-12 mr-3 items-center justify-center bg-blue-50 rounded-lg">
-            <VNPayIcon width={32} height={32} />
-          </View>
-
-          <View className="flex-1">
-            <Text className="font-bold text-base text-gray-800">VNPay</Text>
-            <Text className="text-sm text-gray-500">
-              Thanh toán bằng QR Code hoặc thẻ
+        {/* Phương thức thanh toán */}
+        <View className="bg-white rounded-2xl p-4 shadow-sm">
+          {/* Header Title */}
+          <View className="flex-row items-center mb-4">
+            <CreditCard size={18} color="#244B35" />
+            <Text className="text-base font-bold text-gray-800 ml-2">
+              Phương thức thanh toán
             </Text>
           </View>
 
-          <View
-            className="w-6 h-6 rounded-full border-2"
+          {/* VNPay Option */}
+          <TouchableOpacity
+            onPress={() => {
+              setSelectedMethod("vnpay"); // Logic cũ: dùng string "vnpay"
+              setError(null); // Logic cũ: reset error
+            }}
+            disabled={isLoading} // Logic cũ: disable khi loading
+            className="bg-white p-4 rounded-xl mb-4 flex-row items-center border shadow-sm" // UI cũ: style gọn
             style={{
-              borderColor: selectedMethod === "vnpay" ? "#E09B6B" : "#D1D5DB",
-              backgroundColor:
-                selectedMethod === "vnpay" ? "#E09B6B" : "transparent",
+              borderColor: selectedMethod === "vnpay" ? "#E09B6B" : "#F3F4F6",
+              opacity: isLoading ? 0.6 : 1, // Logic cũ: mờ đi khi loading
             }}
           >
-            {selectedMethod === "vnpay" && (
-              <View className="w-full h-full items-center justify-center">
-                <Text className="text-white font-bold">✓</Text>
-              </View>
-            )}
-          </View>
-        </TouchableOpacity>
+            {/* UI Icon: w-10 h-10, không màu nền */}
+            <View className="w-10 h-10 mr-3 items-center justify-center">
+              <VNPayIcon width={30} height={30} />
+            </View>
 
-        {/* Momo Option */}
-        <TouchableOpacity
-          onPress={() => {
-            setSelectedMethod("momo");
-            setError(null);
-          }}
-          disabled={isLoading}
-          className="bg-white p-4 rounded-xl mb-6 flex-row items-center border shadow-sm"
-          style={{
-            borderColor: selectedMethod === "momo" ? "#E09B6B" : "#F3F4F6",
-            borderWidth: 2,
-            opacity: isLoading ? 0.6 : 1,
-          }}
-        >
-          <View className="w-12 h-12 mr-3 items-center justify-center bg-pink-50 rounded-lg">
-            <MomoIcon width={32} height={32} />
-          </View>
+            <View>
+              <Text className="font-bold text-base text-gray-800">VNPay</Text>
+              <Text className="text-sm text-gray-400">
+                Thanh toán bằng QR Code hoặc thẻ
+              </Text>
+            </View>
+          </TouchableOpacity>
 
-          <View className="flex-1">
-            <Text className="font-bold text-base text-gray-800">Momo</Text>
-            <Text className="text-sm text-gray-500">Ví điện tử Momo</Text>
-          </View>
-
-          <View
-            className="w-6 h-6 rounded-full border-2"
+          {/* Momo Option */}
+          <TouchableOpacity
+            onPress={() => {
+              setSelectedMethod("momo"); // Logic cũ: dùng string "momo"
+              setError(null);
+            }}
+            disabled={isLoading}
+            className="bg-white p-4 rounded-xl mb-6 flex-row items-center border shadow-sm"
             style={{
-              borderColor: selectedMethod === "momo" ? "#E09B6B" : "#D1D5DB",
-              backgroundColor:
-                selectedMethod === "momo" ? "#E09B6B" : "transparent",
+              borderColor: selectedMethod === "momo" ? "#E09B6B" : "#F3F4F6",
+              opacity: isLoading ? 0.6 : 1,
             }}
           >
-            {selectedMethod === "momo" && (
-              <View className="w-full h-full items-center justify-center">
-                <Text className="text-white font-bold">✓</Text>
-              </View>
-            )}
-          </View>
-        </TouchableOpacity>
+            {/* UI Icon: w-10 h-10, không màu nền */}
+            <View className="w-10 h-10 mr-3 items-center justify-center">
+              <MomoIcon width={30} height={30} />
+            </View>
+
+            <View>
+              <Text className="font-bold text-base text-gray-800">Momo</Text>
+              <Text className="text-sm text-gray-400">Ví điện tử Momo</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
 
         {/* Submit Button */}
         <MyButton
