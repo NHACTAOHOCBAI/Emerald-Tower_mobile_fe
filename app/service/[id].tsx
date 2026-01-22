@@ -227,7 +227,7 @@ export default function ServiceDetailScreen() {
                   onPress={() =>
                     !isFull && handleSelectSlot(slot.start_time, slot.end_time)
                   }
-                  disabled={isFull}
+                  disabled={isFull || notValid}
                   className={`px-4 py-3 rounded-md flex-1 basis-[30%] ${containerStyle}`}
                 >
                   <Text
