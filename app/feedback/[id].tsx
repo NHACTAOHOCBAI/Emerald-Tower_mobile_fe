@@ -308,7 +308,7 @@ export default function FeedbackDetailScreen() {
 
           {feedback.status === 'PENDING' && (
             <MyButton
-              className=" w-full bg-red-500 p-4 rounded-lg m-4"
+              className=" w-full bg-red-500 py-4 rounded-lg center"
               textClassName="text-white text-center font-bold "
               onPress={handleDelete}
               isLoading={isDeleting}
