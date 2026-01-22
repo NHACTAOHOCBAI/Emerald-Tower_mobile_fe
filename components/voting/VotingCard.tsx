@@ -58,6 +58,29 @@ export default function VotingCard({
     }
 
     const isUpcoming = status === "UPCOMING";
+
+    // For ONGOING: show both "Biểu quyết" and "Xem kết quả" buttons
+    if (status === "ONGOING") {
+      return (
+        <View className="flex-row gap-2">
+          <TouchableOpacity
+            className="px-4 py-2 rounded-lg bg-[#244B35]"
+            onPress={() => onPressVote(voting)}
+          >
+            <Text className="text-white font-semibold text-sm">Biểu quyết</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className="px-4 py-2 rounded-lg border border-[#244B35]"
+            onPress={() => onPressResult(voting)}
+          >
+            <Text className="text-[#244B35] font-semibold text-sm">
+              Xem kết quả
+            </Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
     return (
       <TouchableOpacity
         className={`px-6 py-2 rounded-lg ${isUpcoming ? "bg-gray-300" : "bg-[#244B35]"}`}

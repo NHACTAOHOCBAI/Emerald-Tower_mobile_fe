@@ -4,30 +4,30 @@ import { getResidentInvoices } from "@/services/invoice.service";
 import { NotificationService } from "@/services/notification.service";
 import { ServiceService } from "@/services/service.service";
 import {
-  getNotiTypeColor,
-  getNotiTypeLabel,
-  Notification,
+    getNotiTypeColor,
+    getNotiTypeLabel,
+    Notification,
 } from "@/types/notification";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 import { router } from "expo-router";
 import {
-  Bell,
-  Building,
-  CreditCard,
-  MessageSquare,
-  Search,
-  Vote,
-  Wrench,
+    Bell,
+    Building,
+    CreditCard,
+    MessageSquare,
+    Search,
+    Vote,
+    Wrench,
 } from "lucide-react-native";
 import {
-  ActivityIndicator,
-  Image,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Image,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -73,6 +73,37 @@ export default function HomeScreen() {
     },
     staleTime: 5 * 60 * 1000,
   });
+
+  // Check if current month's meter reading has been submitted
+  const hasCurrentMonthMeterReading = () => {
+    // Get current month's first day
+    const today = new Date();
+    const currentMonthStart = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      1,
+    );
+
+    // Find invoice for current month
+    const currentInvoice = invoices.find((inv: any) => {
+      const invoicePeriod = new Date(inv.period);
+      return (
+        invoicePeriod.getFullYear() === currentMonthStart.getFullYear() &&
+        invoicePeriod.getMonth() === currentMonthStart.getMonth()
+      );
+    });
+
+    // If no invoice exists for current month, user should submit
+    if (!currentInvoice) {
+      return false;
+    }
+
+    // If invoice exists, check if it has meter readings submitted
+    // The invoice is from client submission, so if it exists = meter reading was submitted
+    return true;
+  };
+
+  const shouldShowMeterReadingPrompt = !hasCurrentMonthMeterReading();
 
   // Fetch feedback
   const { data: feedbacks = [] } = useQuery({
@@ -242,18 +273,22 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            <Text className="text-sm text-red-600 mb-3">
-              Đã đến hạn nhập chỉ số điện, nước! Vui lòng thực hiện
-            </Text>
+            {shouldShowMeterReadingPrompt && (
+              <>
+                <Text className="text-sm text-red-600 mb-3">
+                  Đã đến hạn nhập chỉ số điện, nước! Vui lòng thực hiện
+                </Text>
 
-            <TouchableOpacity
-              onPress={() => router.push("/payment/input-meter" as any)}
-              className="bg-[#F5F5DC] py-3 rounded-lg"
-            >
-              <Text className="text-center text-[#244B35] font-semibold">
-                + Thêm chỉ số
-              </Text>
-            </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => router.push("/payment/input-meter" as any)}
+                  className="bg-[#F5F5DC] py-3 rounded-lg"
+                >
+                  <Text className="text-center text-[#244B35] font-semibold">
+                    + Thêm chỉ số
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
 

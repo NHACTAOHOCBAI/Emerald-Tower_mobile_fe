@@ -1,11 +1,11 @@
-import { CustomHeader } from "@/components/ui/CustomHeader";
 import BaseInput from "@/components/ui/BaseInput";
+import { CustomHeader } from "@/components/ui/CustomHeader";
+import { useAuth } from "@/contexts/AuthContext";
+import { clearAuthStorage } from "@/utils/auth-storage";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "@/contexts/AuthContext";
-import { clearAuthStorage } from "@/utils/auth-storage";
 
 type Errors = { email?: string; password?: string };
 
@@ -23,7 +23,8 @@ export default function LoginScreen() {
     const e = email.trim();
 
     if (!e) next.email = "Vui lòng nhập email.";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) next.email = "Email không hợp lệ.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))
+      next.email = "Email không hợp lệ.";
 
     if (!password) next.password = "Vui lòng nhập mật khẩu.";
     else if (password.length < 6) next.password = "Mật khẩu tối thiểu 6 ký tự.";
@@ -41,14 +42,16 @@ export default function LoginScreen() {
       const profile = await login(email, password);
       if (profile.role !== "RESIDENT") {
         Alert.alert("Đăng nhập thất bại", "Không đúng tài khoản.");
-        await clearAuthStorage();   
+        await clearAuthStorage();
         await logout();
         return;
       }
       router.replace("/(tabs)/home");
     } catch (error: any) {
       const message =
-        error?.response?.data?.message || error?.message || "Đăng nhập thất bại";
+        error?.response?.data?.message ||
+        error?.message ||
+        "Đăng nhập thất bại";
       Alert.alert("Đăng nhập thất bại", message);
     } finally {
       setIsSubmitting(false);
@@ -57,14 +60,20 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <CustomHeader title="Đăng nhập" showBackButton={false} showRefresh={false}/>
+      <CustomHeader
+        title="Đăng nhập"
+        showBackButton={false}
+        showRefresh={false}
+      />
 
       <View className="px-5 py-4 gap-4">
         <View>
-          <Text className="text-sm font-semibold text-gray-700 mb-2">Email</Text>
+          <Text className="text-sm font-semibold text-gray-700 mb-2">
+            Email
+          </Text>
           <BaseInput
             value={email}
-            placeholder="example@example"
+            placeholder="Nhập email"
             keyboardType="email-address"
             onChangeText={(t) => {
               setEmail(t);
@@ -75,8 +84,8 @@ export default function LoginScreen() {
                   email: !e
                     ? "Vui lòng nhập email."
                     : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)
-                    ? "Email không hợp lệ."
-                    : undefined,
+                      ? "Email không hợp lệ."
+                      : undefined,
                 }));
               }
             }}
@@ -86,7 +95,9 @@ export default function LoginScreen() {
         </View>
 
         <View>
-          <Text className="text-sm font-semibold text-gray-700 mb-2">Mật khẩu</Text>
+          <Text className="text-sm font-semibold text-gray-700 mb-2">
+            Nhập mật khẩu
+          </Text>
           <BaseInput
             value={password}
             placeholder="Enter password"
@@ -99,8 +110,8 @@ export default function LoginScreen() {
                   password: !t
                     ? "Vui lòng nhập mật khẩu."
                     : t.length < 6
-                    ? "Mật khẩu tối thiểu 6 ký tự."
-                    : undefined,
+                      ? "Mật khẩu tối thiểu 6 ký tự."
+                      : undefined,
                 }));
               }
             }}

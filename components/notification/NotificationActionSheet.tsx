@@ -49,11 +49,19 @@ export function showNotificationActionsSheet({
       handleAction,
     );
   } else {
-    Alert.alert("Tùy chọn", "", [
-      { text: "Tóm tắt thông báo", onPress: () => handleAction(0) },
-      { text: toggleLabel, onPress: () => handleAction(1) },
-      { text: "Xóa", style: "destructive", onPress: () => handleAction(2) },
-      { text: "Hủy", style: "cancel" },
-    ]);
+    Alert.alert(
+      "Tùy chọn",
+      "",
+      [
+        { text: "Tóm tắt thông báo", onPress: () => handleAction(0) },
+        { text: toggleLabel, onPress: () => handleAction(1) },
+        { text: "Xóa", style: "destructive", onPress: () => handleAction(2) },
+        { text: "Hủy", style: "cancel", onPress: () => onClose?.() },
+      ],
+      {
+        cancelable: true,
+        onDismiss: () => onClose?.(),
+      },
+    );
   }
 }
