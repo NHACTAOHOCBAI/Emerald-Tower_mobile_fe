@@ -1,7 +1,9 @@
 import CategorySelector from '@/components/feedback/CategorySelector';
+import MyButton from '@/components/ui/Button';
 import { CustomHeader } from '@/components/ui/CustomHeader';
 import { FeedbackService } from '@/services/feedback.service';
 import { Block, IssueType } from '@/types/feedback';
+import { useMutation } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { ChevronDown, Image as ImageIcon, X } from 'lucide-react-native';
@@ -11,12 +13,12 @@ import {
   FlatList,
   Image,
   Modal,
-  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CreateFeedbackScreen() {
@@ -60,7 +62,49 @@ export default function CreateFeedbackScreen() {
     setImages(images.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async () => {
+  const submitFeedbackMutation = useMutation({
+    mutationFn: async () => {
+      type FeedbackPayload = {
+        type: IssueType;
+        title: string;
+        description: string;
+        blockId?: number;
+        detailLocation: string;
+        floor?: number;
+      };
+
+      const payload: FeedbackPayload = {
+        type: selectedType!,
+        title,
+        description,
+        blockId: selectedBlock?.id,
+        detailLocation: detailDescription,
+      };
+
+      if (selectedFloor !== null) {
+        payload.floor = selectedFloor;
+      }
+
+      return FeedbackService.create(payload, images);
+    },
+    onSuccess: () => {
+      Alert.alert('Thành công', 'Đã gửi phản ánh thành công!', [
+        { text: 'OK', onPress: () => router.replace('/feedback') },
+      ]);
+    },
+
+    onError: (error: any) => {
+      Alert.alert(
+        'Lỗi',
+        error?.data?.data?.message ||
+          error?.data?.message ||
+          error?.message ||
+          'Không thể gửi phản ánh, vui lòng thử lại'
+      );
+    },
+  });
+
+  const handleSubmit = () => {
     if (
       !selectedType ||
       !title.trim() ||
@@ -70,29 +114,7 @@ export default function CreateFeedbackScreen() {
       Alert.alert('Lỗi', 'Vui lòng điền đầy đủ thông tin bắt buộc');
       return;
     }
-
-    try {
-      await FeedbackService.create(
-        {
-          type: selectedType,
-          title,
-          description,
-          blockId: selectedBlock?.id,
-          floor: selectedFloor,
-          detailLocation: detailDescription,
-        },
-        images
-      );
-
-      Alert.alert('Thành công', 'Đã gửi phản ánh thành công!', [
-        { text: 'OK', onPress: () => router.replace('/feedback') },
-      ]);
-    } catch (error: any) {
-      Alert.alert(
-        'Lỗi',
-        error.data.data.message || 'Không thể gửi phản ánh, vui lòng thử lại'
-      );
-    }
+    submitFeedbackMutation.mutate();
   };
 
   const floors = selectedBlock
@@ -114,7 +136,11 @@ export default function CreateFeedbackScreen() {
     <SafeAreaView className="flex-1 bg-gray-50">
       <CustomHeader title="Tạo phản ánh" />
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <KeyboardAwareScrollView
+        enableOnAndroid={true}
+        extraScrollHeight={20}
+        enableAutomaticScroll={true}
+      >
         <View className="p-5">
           <View className="mb-6">
             <Text className="text-sm font-semibold text-gray-700 mb-3">
@@ -141,7 +167,7 @@ export default function CreateFeedbackScreen() {
 
           <View className="mb-4">
             <Text className="text-sm font-semibold text-gray-700 mb-2">
-              Vị trí sự cố <Text className="text-red-500">*</Text>
+              Vị trí sự cố
             </Text>
             <View className="flex-row gap-2">
               <TouchableOpacity
@@ -179,7 +205,7 @@ export default function CreateFeedbackScreen() {
 
           <View className="mb-4">
             <Text className="text-sm font-semibold text-gray-700 mb-2">
-              Mô tả chi tiết
+              Mô tả chi tiết <Text className="text-red-500">*</Text>
             </Text>
             <TextInput
               placeholder="Mô tả chi tiết vấn đề bạn gặp phải..."
@@ -195,8 +221,7 @@ export default function CreateFeedbackScreen() {
 
           <View className="mb-4">
             <Text className="text-sm font-semibold text-gray-700 mb-2">
-              Ảnh/video đính kèm (Tối đa 5){' '}
-              <Text className="text-red-500">*</Text>
+              Ảnh đính kèm (Tối đa 5) <Text className="text-red-500">*</Text>
             </Text>
             <View className="flex-row flex-wrap gap-2">
               {images.map((uri, index) => (
@@ -226,16 +251,16 @@ export default function CreateFeedbackScreen() {
             </View>
           </View>
 
-          <TouchableOpacity
+          <MyButton
+            className="w-full bg-[#E09B6B] py-4 rounded-lg"
+            textClassName="font-bold text-base uppercase"
             onPress={handleSubmit}
-            className="bg-[#244B35] py-4 rounded-lg mt-4"
+            isLoading={submitFeedbackMutation.isPending}
           >
-            <Text className="text-white text-center font-bold text-base">
-              Gửi phản ánh
-            </Text>
-          </TouchableOpacity>
+            Gửi phản ánh
+          </MyButton>
         </View>
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       <Modal visible={showBlockModal} animationType="slide" transparent>
         <View className="flex-1 justify-end bg-black/50">
@@ -249,7 +274,7 @@ export default function CreateFeedbackScreen() {
                   onPress={() => selectBlock(item)}
                   className="py-3 border-b border-gray-200"
                 >
-                  <Text className="text-gray-800">{item.name}</Text>{' '}
+                  <Text className="text-gray-800">{item.name} </Text>
                 </TouchableOpacity>
               )}
             />
