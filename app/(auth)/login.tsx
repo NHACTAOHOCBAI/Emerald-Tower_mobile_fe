@@ -120,14 +120,6 @@ export default function LoginScreen() {
           />
         </View>
 
-        <TouchableOpacity
-          onPress={() => router.push("/(auth)/forgot-password" as any)}
-          className="self-end"
-          activeOpacity={0.8}
-        >
-          <Text className="text-sm text-orange-500">Quên mật khẩu?</Text>
-        </TouchableOpacity>
-
         <View className="items-center mt-6">
           <TouchableOpacity
             onPress={onSubmit}

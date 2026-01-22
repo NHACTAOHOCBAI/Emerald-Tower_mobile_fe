@@ -57,36 +57,51 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
   const { logout } = useAuth();
 
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<ImagePicker.ImagePickerAsset | null>(
-    null,
-  );
+  const [selectedImage, setSelectedImage] =
+    useState<ImagePicker.ImagePickerAsset | null>(null);
   const [isZoomVisible, setIsZoomVisible] = useState(false);
   const [provinceCode, setProvinceCode] = useState<number | null>(null);
 
   const { data: provinces, isLoading: loadingProvinces } = useProvinces();
-  const { data: wards, isLoading: loadingWards } = useWardsByProvince(provinceCode);
+  const { data: wards, isLoading: loadingWards } =
+    useWardsByProvince(provinceCode);
 
-  const provinceOptions = provinces?.map((p) => ({ label: p.name, value: p.code })) || [];
-  const wardOptions = wards?.map((w) => ({ label: w.name, value: w.name })) || [];
+  const provinceOptions =
+    provinces?.map((p) => ({ label: p.name, value: p.code })) || [];
+  const wardOptions =
+    wards?.map((w) => ({ label: w.name, value: w.name })) || [];
 
   const updateMutation = useUpdateResident();
   const [pwdOpen, setPwdOpen] = useState(false);
 
+  const toMessageString = (m: any) => {
+    if (Array.isArray(m)) return m.join("\n");
+    if (typeof m === "string") return m;
+    if (m?.message) return toMessageString(m.message);
+    try {
+      return JSON.stringify(m);
+    } catch {
+      return String(m);
+    }
+  };
+
   const submitChangePassword = async (payload: {
     oldPassword: string;
     newPassword: string;
-  }) => {
+  }): Promise<void> => {
     try {
       await changePassword(payload);
       Alert.alert("Thành công", "Đổi mật khẩu thành công.");
       // logout();
     } catch (err: any) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
+      const raw =
+        err?.response?.data?.message ??
+        err?.message ??
         "Đổi mật khẩu thất bại. Vui lòng thử lại.";
-      Alert.alert("Lỗi", msg);
-      throw err;
+
+      Alert.alert("Lỗi", toMessageString(raw));
+      // Re-throw để modal không đóng khi có lỗi
+      throw new Error(toMessageString(raw));
     }
   };
 
@@ -288,7 +303,9 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
       </Modal>
 
       <View className="flex-row justify-between items-center mb-4">
-        <Text className="text-[#E09B6B] text-lg font-bold">Thông tin chung</Text>
+        <Text className="text-[#E09B6B] text-lg font-bold">
+          Thông tin chung
+        </Text>
 
         <View className="flex-row gap-2 items-center">
           {isEditing && (
@@ -298,19 +315,25 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
               className="px-4 py-1.5 rounded-full border border-gray-300 bg-gray-100 justify-center items-center h-full"
               style={{ minHeight: 32 }}
             >
-              <Text className="text-xs font-bold text-gray-600 text-center">Hủy</Text>
+              <Text className="text-xs font-bold text-gray-600 text-center">
+                Hủy
+              </Text>
             </TouchableOpacity>
           )}
 
           <TouchableOpacity
             disabled={updateMutation.isPending}
-            onPress={() => (isEditing ? handleSubmit(onSubmit)() : setIsEditing(true))}
+            onPress={() =>
+              isEditing ? handleSubmit(onSubmit)() : setIsEditing(true)
+            }
             className={`px-4 py-1.5 rounded-full border flex-row items-center justify-center gap-2 ${
               isEditing ? "bg-[#E09B6B] border-[#E09B6B]" : "border-[#E09B6B]"
             }`}
             style={{ minHeight: 32 }}
           >
-            {updateMutation.isPending && <ActivityIndicator size="small" color="white" />}
+            {updateMutation.isPending && (
+              <ActivityIndicator size="small" color="white" />
+            )}
             <Text
               className={`text-xs font-bold ${
                 isEditing ? "text-white" : "text-[#E09B6B]"
@@ -328,7 +351,10 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
             <Controller
               control={control}
               name="fullName"
-              render={({ field: { onChange, value }, fieldState: { error } }) => (
+              render={({
+                field: { onChange, value },
+                fieldState: { error },
+              }) => (
                 <InfoRow
                   icon={User}
                   label={renderLabel("Họ và tên") as any}
@@ -344,7 +370,11 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
               )}
             />
           ) : (
-            <InfoRow icon={User} label="Họ và tên" value={displayValue(data.fullName)} />
+            <InfoRow
+              icon={User}
+              label="Họ và tên"
+              value={displayValue(data.fullName)}
+            />
           )}
         </View>
 
@@ -353,7 +383,10 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
             <Controller
               control={control}
               name="gender"
-              render={({ field: { onChange, value }, fieldState: { error } }) => (
+              render={({
+                field: { onChange, value },
+                fieldState: { error },
+              }) => (
                 <InfoRow
                   icon={UserRound}
                   label={renderLabel("Giới tính") as any}
@@ -379,7 +412,11 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
         </View>
 
         <View className="mb-3">
-          <InfoRow icon={IdCard} label="CCCD" value={displayValue(data.citizenId)} />
+          <InfoRow
+            icon={IdCard}
+            label="CCCD"
+            value={displayValue(data.citizenId)}
+          />
         </View>
 
         <View className="mb-3">
@@ -387,7 +424,10 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
             <Controller
               control={control}
               name="dob"
-              render={({ field: { onChange, value }, fieldState: { error } }) => (
+              render={({
+                field: { onChange, value },
+                fieldState: { error },
+              }) => (
                 <InfoRow
                   icon={Calendar}
                   label={renderLabel("Ngày sinh") as any}
@@ -417,7 +457,10 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
             <Controller
               control={control}
               name="phone"
-              render={({ field: { onChange, value }, fieldState: { error } }) => (
+              render={({
+                field: { onChange, value },
+                fieldState: { error },
+              }) => (
                 <InfoRow
                   icon={Phone}
                   label={renderLabel("Số điện thoại") as any}
@@ -443,7 +486,9 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
         </View>
       </View>
 
-      <Text className="text-[#E09B6B] text-lg mb-4 font-bold">Địa chỉ thường trú</Text>
+      <Text className="text-[#E09B6B] text-lg mb-4 font-bold">
+        Địa chỉ thường trú
+      </Text>
       <View className="bg-white rounded-2xl p-5 shadow-sm border border-[#EFEAE1]">
         <View className="mb-3">
           <InfoRow
@@ -468,17 +513,24 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
                     <MySelect
                       value={
                         value
-                          ? provinceOptions.find((o) => o.label === value)?.value
+                          ? provinceOptions.find((o) => o.label === value)
+                              ?.value
                           : undefined
                       }
                       items={provinceOptions}
-                      placeholder={loadingProvinces ? "Đang tải..." : "Chọn Tỉnh/TP"}
+                      placeholder={
+                        loadingProvinces ? "Đang tải..." : "Chọn Tỉnh/TP"
+                      }
                       searchable={true}
                       error={error?.message}
                       onSelect={(val) => {
-                        const selected = provinceOptions.find((p) => p.value === val);
+                        const selected = provinceOptions.find(
+                          (p) => p.value === val,
+                        );
                         if (selected) {
-                          setValue("province", selected.label, { shouldValidate: true });
+                          setValue("province", selected.label, {
+                            shouldValidate: true,
+                          });
                           setValue("ward", "", { shouldValidate: true });
                           setProvinceCode(selected.value as number);
                         }
@@ -523,7 +575,9 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
                       searchable={true}
                       error={error?.message}
                       onSelect={(val) =>
-                        setValue("ward", val as string, { shouldValidate: true })
+                        setValue("ward", val as string, {
+                          shouldValidate: true,
+                        })
                       }
                     />
                   </InfoRow>
@@ -544,7 +598,10 @@ export const ResidentTab = ({ data }: ResidentTabProps) => {
             <Controller
               control={control}
               name="detailAddress"
-              render={({ field: { onChange, value }, fieldState: { error } }) => (
+              render={({
+                field: { onChange, value },
+                fieldState: { error },
+              }) => (
                 <InfoRow icon={Home} label="Số nhà, đường" isEditing={true}>
                   <BaseInput
                     value={value ?? ""}

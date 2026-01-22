@@ -162,6 +162,9 @@ export function ChangePasswordModal({ open, onClose, onSubmit }: Props) {
       setSubmitting(true);
       await onSubmit({ oldPassword, newPassword });
       onClose();
+    } catch (error) {
+      // Error đã được xử lý và hiển thị ở parent component
+      // Không làm gì thêm, chỉ giữ modal mở để user có thể thử lại
     } finally {
       setSubmitting(false);
     }
