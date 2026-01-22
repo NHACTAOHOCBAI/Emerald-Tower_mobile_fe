@@ -40,10 +40,18 @@ const COLORS = {
 };
 
 const ICONS = {
-  management: { icon: Building, bg: "rgba(36, 75, 53, 0.12)", color: "#244B35" },
+  management: {
+    icon: Building,
+    bg: "rgba(36, 75, 53, 0.12)",
+    color: "#244B35",
+  },
   electricity: { icon: Zap, bg: "rgba(234, 179, 8, 0.15)", color: "#EAB308" },
   water: { icon: Droplets, bg: "rgba(59, 130, 246, 0.15)", color: "#3B82F6" },
-  default: { icon: Building, bg: "rgba(156, 163, 175, 0.15)", color: "#9CA3AF" },
+  default: {
+    icon: Building,
+    bg: "rgba(156, 163, 175, 0.15)",
+    color: "#9CA3AF",
+  },
 };
 
 const FEE_PRIORITY: Record<string, number> = {
@@ -110,10 +118,13 @@ export default function BillDetailScreen() {
       (a, b) => new Date(a.period).getTime() - new Date(b.period).getTime(),
     );
 
-    const currentIndex = sortedInvoices.findIndex((inv) => inv.id === numericId);
+    const currentIndex = sortedInvoices.findIndex(
+      (inv) => inv.id === numericId,
+    );
 
     if (currentIndex === -1) return { prevId: null, nextId: null };
-    const prevId = currentIndex > 0 ? sortedInvoices[currentIndex - 1].id : null;
+    const prevId =
+      currentIndex > 0 ? sortedInvoices[currentIndex - 1].id : null;
     const nextId =
       currentIndex < sortedInvoices.length - 1
         ? sortedInvoices[currentIndex + 1].id
@@ -152,7 +163,8 @@ export default function BillDetailScreen() {
     }
 
     const successPayment = paymentHistory?.find((p) => p.status === "SUCCESS");
-    let paymentInfo = null;
+    let paymentInfo: { amount: number; method: string; date: string } | null =
+      null;
     if (successPayment) {
       const payDate = successPayment.payDate
         ? new Date(successPayment.payDate)
@@ -177,7 +189,14 @@ export default function BillDetailScreen() {
         (r) => r.feeTypeId === detail.feeTypeId,
       );
 
-      let details = null;
+      let details: {
+        old: number;
+        new: number;
+        usage: number;
+        tiers: { name: string; usage: number; price: string; total: string }[];
+        oldDateLabel: string;
+        newDateLabel: string;
+      } | null = null;
       let periodDisplay = monthStr; // hiển thị tháng (cho phí quản lý)
 
       if (reading) {
@@ -186,26 +205,44 @@ export default function BillDetailScreen() {
           oldDate = new Date(reading.oldIndexReadingDate);
         } else {
           const currentMonth = new Date(invoiceData.period);
-          oldDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 20);
+          oldDate = new Date(
+            currentMonth.getFullYear(),
+            currentMonth.getMonth() - 1,
+            20,
+          );
         }
 
-        const newDate = reading.readingDate ? new Date(reading.readingDate) : new Date();
+        const newDate = reading.readingDate
+          ? new Date(reading.readingDate)
+          : new Date();
         const oldDateLabel = formatShortDate(oldDate);
         const newDateLabel = formatShortDate(newDate);
 
         periodDisplay = `${oldDateLabel} - ${newDateLabel}`;
 
-        const tiers = [];
+        const tiers: {
+          name: string;
+          usage: number;
+          price: string;
+          total: string;
+        }[] = [];
         if (detail.calculationBreakdown) {
-          for (const [key, value] of Object.entries(detail.calculationBreakdown)) {
-            const [usage, price] = value.split("*");
-            const total = Number(usage) * Number(price);
-            tiers.push({
-              name: key,
-              usage: Number(usage),
-              price: Number(price).toLocaleString("vi-VN"),
-              total: total.toLocaleString("vi-VN"),
-            });
+          for (const [key, value] of Object.entries(
+            detail.calculationBreakdown,
+          )) {
+            if (value && typeof value === "string") {
+              const parts = value.split("*");
+              if (parts.length === 2) {
+                const [usage, price] = parts;
+                const total = Number(usage) * Number(price);
+                tiers.push({
+                  name: key,
+                  usage: Number(usage),
+                  price: Number(price).toLocaleString("vi-VN"),
+                  total: total.toLocaleString("vi-VN"),
+                });
+              }
+            }
           }
         }
 
@@ -231,7 +268,9 @@ export default function BillDetailScreen() {
       };
     });
 
-    fees = fees.sort((a, b) => (FEE_PRIORITY[a.type] || 4) - (FEE_PRIORITY[b.type] || 4));
+    fees = fees.sort(
+      (a, b) => (FEE_PRIORITY[a.type] || 4) - (FEE_PRIORITY[b.type] || 4),
+    );
 
     return {
       ...invoiceData,
@@ -281,8 +320,15 @@ export default function BillDetailScreen() {
   const StatusIcon = statusInfo.icon;
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F3F4F6]" edges={["top", "left", "right"]}>
-      <CustomHeader title="Chi tiết hóa đơn" backgroundColor="#F3F4F6" showBorder={false}>
+    <SafeAreaView
+      className="flex-1 bg-[#F3F4F6]"
+      edges={["top", "left", "right"]}
+    >
+      <CustomHeader
+        title="Chi tiết hóa đơn"
+        backgroundColor="#F3F4F6"
+        showBorder={false}
+      >
         <View className="flex-row items-center justify-between px-3 pb-2 mt-2">
           <TouchableOpacity
             className="flex-row items-center"
@@ -325,7 +371,11 @@ export default function BillDetailScreen() {
               </Text>
 
               <View className="flex-row items-center gap-2 mb-2">
-                <StatusIcon size={20} className={statusInfo.text} color="currentColor" />
+                <StatusIcon
+                  size={20}
+                  className={statusInfo.text}
+                  color="currentColor"
+                />
                 <Text className={`font-bold text-base ${statusInfo.text}`}>
                   {statusInfo.label}
                 </Text>
@@ -337,7 +387,10 @@ export default function BillDetailScreen() {
             </View>
 
             <Text className={`text-xl font-bold ${statusInfo.text}`}>
-              {Math.round(Number(processedData.totalAmount)).toLocaleString("vi-VN")} đ
+              {Math.round(Number(processedData.totalAmount)).toLocaleString(
+                "vi-VN",
+              )}{" "}
+              đ
             </Text>
           </View>
 
@@ -346,19 +399,23 @@ export default function BillDetailScreen() {
               <Text className={`text-sm ${statusInfo.text} mb-1`}>
                 Số tiền:{" "}
                 <Text className="font-bold">
-                  {Math.round(Number(processedData.paymentInfo.amount)).toLocaleString(
-                    "vi-VN",
-                  )}{" "}
+                  {Math.round(
+                    Number(processedData.paymentInfo.amount),
+                  ).toLocaleString("vi-VN")}{" "}
                   VNĐ
                 </Text>
               </Text>
               <Text className={`text-sm ${statusInfo.text} mb-1`}>
                 Thời gian:{" "}
-                <Text className="font-bold">{processedData.paymentInfo.date}</Text>
+                <Text className="font-bold">
+                  {processedData.paymentInfo.date}
+                </Text>
               </Text>
               <Text className={`text-sm ${statusInfo.text}`}>
                 Phương thức:{" "}
-                <Text className="font-bold">{processedData.paymentInfo.method}</Text>
+                <Text className="font-bold">
+                  {processedData.paymentInfo.method}
+                </Text>
               </Text>
             </View>
           )}
@@ -381,7 +438,8 @@ export default function BillDetailScreen() {
           onToggle={() => toggleSection("summary")}
         >
           {processedData.fees.map((item, idx) => {
-            const IconData = ICONS[item.type as keyof typeof ICONS] || ICONS.default;
+            const IconData =
+              ICONS[item.type as keyof typeof ICONS] || ICONS.default;
             return (
               <View key={idx} className="flex-row items-center py-3">
                 <View
@@ -392,7 +450,9 @@ export default function BillDetailScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className="font-bold text-gray-800">{item.name}</Text>
-                  <Text className="text-[11px] text-gray-500">{item.period}</Text>
+                  <Text className="text-[11px] text-gray-500">
+                    {item.period}
+                  </Text>
                 </View>
                 <Text className="font-bold text-gray-700">
                   {/* hiển thị totalWithVat */}
@@ -402,11 +462,20 @@ export default function BillDetailScreen() {
             );
           })}
           <View className="flex-row justify-between items-center pt-4 mt-2 border-t border-[#D9D9D9]">
-            <Text className="font-bold text-base" style={{ color: COLORS.main }}>
+            <Text
+              className="font-bold text-base"
+              style={{ color: COLORS.main }}
+            >
               Tổng cộng
             </Text>
-            <Text className="font-extrabold text-xl" style={{ color: COLORS.main }}>
-              {Math.round(Number(processedData.totalAmount)).toLocaleString("vi-VN")} đ
+            <Text
+              className="font-extrabold text-xl"
+              style={{ color: COLORS.main }}
+            >
+              {Math.round(Number(processedData.totalAmount)).toLocaleString(
+                "vi-VN",
+              )}{" "}
+              đ
             </Text>
           </View>
         </SectionCard>
@@ -522,7 +591,8 @@ export default function BillDetailScreen() {
         }}
       >
         <View className="flex-row gap-3">
-          {processedData.status === "UNPAID" || processedData.status === "OVERDUE" ? (
+          {processedData.status === "UNPAID" ||
+          processedData.status === "OVERDUE" ? (
             <>
               <View className="flex-1">
                 <MyButton
@@ -551,7 +621,9 @@ export default function BillDetailScreen() {
                   }}
                 >
                   <Wallet size={18} color="white" style={{ marginRight: 8 }} />
-                  <Text className="text-white font-bold text-base">Thanh toán</Text>
+                  <Text className="text-white font-bold text-base">
+                    Thanh toán
+                  </Text>
                 </MyButton>
               </View>
             </>
@@ -568,7 +640,13 @@ export default function BillDetailScreen() {
   );
 }
 
-const SectionCard = ({ title, isOpen, onToggle, children, extraComponent }: any) => (
+const SectionCard = ({
+  title,
+  isOpen,
+  onToggle,
+  children,
+  extraComponent,
+}: any) => (
   <View className="bg-white rounded-2xl mb-4 shadow-sm border border-[#D9D9D9] overflow-hidden">
     <TouchableOpacity
       onPress={onToggle}
@@ -586,7 +664,9 @@ const SectionCard = ({ title, isOpen, onToggle, children, extraComponent }: any)
       </View>
     </TouchableOpacity>
     {isOpen && (
-      <View className="px-5 pb-5 border-t border-[#D9D9D9]/50 pt-2">{children}</View>
+      <View className="px-5 pb-5 border-t border-[#D9D9D9]/50 pt-2">
+        {children}
+      </View>
     )}
   </View>
 );
@@ -602,8 +682,12 @@ const MetricBox = ({ label, value, isHighlight }: any) => (
   <View
     className={`flex-1 rounded-xl p-3 items-center justify-center border border-[#D9D9D9] bg-white`}
   >
-    <Text className="text-[10px] text-black mb-1 font-semibold text-center">{label}</Text>
-    <Text className={`font-bold text-sm ${isHighlight ? "text-[#E09B6B]" : "text-main"}`}>
+    <Text className="text-[10px] text-black mb-1 font-semibold text-center">
+      {label}
+    </Text>
+    <Text
+      className={`font-bold text-sm ${isHighlight ? "text-[#E09B6B]" : "text-main"}`}
+    >
       {value}
     </Text>
   </View>

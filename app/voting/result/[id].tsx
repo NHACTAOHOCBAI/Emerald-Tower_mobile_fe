@@ -1,30 +1,30 @@
-import { CustomHeader } from '@/components/ui/CustomHeader';
-import { VotingService } from '@/services/voting.service';
-import { useQuery } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
+import { CustomHeader } from "@/components/ui/CustomHeader";
+import { VotingService } from "@/services/voting.service";
+import { useQuery } from "@tanstack/react-query";
+import { useLocalSearchParams } from "expo-router";
 import {
   ActivityIndicator,
   Dimensions,
   ScrollView,
   Text,
   View,
-} from 'react-native';
-import { PieChart } from 'react-native-chart-kit';
-import { SafeAreaView } from 'react-native-safe-area-context';
+} from "react-native";
+import { PieChart } from "react-native-chart-kit";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const CHART_COLORS = [
-  '#5B8C5A', // Green
-  '#8FBC94', // Light green
-  '#C8E6C9', // Very light green
-  '#A5D6A7', // Pale green
-  '#81C784', // Medium green
+  "#5B8C5A", // Green
+  "#8FBC94", // Light green
+  "#C8E6C9", // Very light green
+  "#A5D6A7", // Pale green
+  "#81C784", // Medium green
 ];
 
 export default function VotingResultScreen() {
   const { id } = useLocalSearchParams();
 
   const { data: result, isLoading } = useQuery({
-    queryKey: ['result', id],
+    queryKey: ["result", id],
     queryFn: async () => {
       const response = await VotingService.getStatistics(Number(id));
       return response.data;
@@ -46,14 +46,14 @@ export default function VotingResultScreen() {
 
   const totalVotes = result.options.reduce(
     (sum: number, opt: any) => sum + (opt.vote_count || 0),
-    0
+    0,
   );
 
   const chartData = result.options.map((option: any, index: number) => ({
-    name: option.name.replace('Phương án ', 'PA '),
+    name: option.name?.toString() || "",
     population: option.total_area || 0,
     color: CHART_COLORS[index % CHART_COLORS.length],
-    legendFontColor: '#374151',
+    legendFontColor: "#374151",
     legendFontSize: 12,
   }));
 
@@ -63,7 +63,7 @@ export default function VotingResultScreen() {
   };
 
   const winningOption = result.options.reduce((prev: any, current: any) =>
-    (prev.total_area || 0) > (current.total_area || 0) ? prev : current
+    (prev.total_area || 0) > (current.total_area || 0) ? prev : current,
   );
 
   return (
@@ -99,7 +99,7 @@ export default function VotingResultScreen() {
             <View className="bg-white rounded-lg p-4 mb-4 items-center">
               <PieChart
                 data={chartData}
-                width={Dimensions.get('window').width - 60}
+                width={Dimensions.get("window").width - 60}
                 height={220}
                 chartConfig={{
                   color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
@@ -115,7 +115,7 @@ export default function VotingResultScreen() {
           <View className="bg-white rounded-lg p-4 mb-4">
             {result.options.map((option: any, index: number) => {
               const percentage = getPercentage(
-                option.percentage || option.total_area || 0
+                option.percentage || option.total_area || 0,
               );
               const isWinner = option.id === winningOption.id && totalVotes > 0;
               const progressWidth =
@@ -123,11 +123,11 @@ export default function VotingResultScreen() {
 
               return (
                 <View
-                  key={option.id}
+                  key={`option-${option.id || index}-${index}`}
                   className={`mb-4 pb-4 ${
                     index < result.options.length - 1
-                      ? 'border-b border-gray-100'
-                      : ''
+                      ? "border-b border-gray-100"
+                      : ""
                   }`}
                 >
                   <View className="flex-row justify-between items-start mb-2">
@@ -142,8 +142,8 @@ export default function VotingResultScreen() {
                       <Text
                         className={`flex-1 text-sm ${
                           isWinner
-                            ? 'font-bold text-[#244B35]'
-                            : 'text-gray-700'
+                            ? "font-bold text-[#244B35]"
+                            : "text-gray-700"
                         }`}
                       >
                         {option.name}
@@ -151,7 +151,7 @@ export default function VotingResultScreen() {
                     </View>
                     <Text
                       className={`text-sm font-bold ml-2 ${
-                        isWinner ? 'text-[#244B35]' : 'text-gray-600'
+                        isWinner ? "text-[#244B35]" : "text-gray-600"
                       }`}
                     >
                       {percentage}%
@@ -189,8 +189,8 @@ export default function VotingResultScreen() {
                 {winningOption.name}
               </Text>
               <Text className="text-sm text-green-700 mt-2">
-                Với {winningOption.vote_count} lượt bỏ phiếu ({' '}
-                {winningOption.total_area} m2,{' '}
+                Với {winningOption.vote_count} lượt bỏ phiếu ({" "}
+                {winningOption.total_area} m2,{" "}
                 {winningOption.percentage ||
                   getPercentage(winningOption.total_area || 0)}
                 %)

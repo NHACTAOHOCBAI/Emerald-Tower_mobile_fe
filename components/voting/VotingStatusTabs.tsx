@@ -1,5 +1,5 @@
-import { VotingStatus } from '@/types/voting';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { VotingStatus } from "@/types/voting";
+import { Text, TouchableOpacity, View } from "react-native";
 
 interface StatusTabsProps {
   activeStatus: VotingStatus;
@@ -7,14 +7,14 @@ interface StatusTabsProps {
   counts?: {
     ONGOING: number;
     UPCOMING: number;
-    CLOSED: number;
+    ENDED: number;
   };
 }
 
 const TABS = [
-  { key: 'ONGOING' as VotingStatus, label: 'Đang diễn ra' },
-  { key: 'UPCOMING' as VotingStatus, label: 'Sắp diễn ra' },
-  { key: 'CLOSED' as VotingStatus, label: 'Đã đóng' },
+  { key: "ONGOING" as VotingStatus, label: "Đang diễn ra" },
+  { key: "UPCOMING" as VotingStatus, label: "Sắp diễn ra" },
+  { key: "ENDED" as VotingStatus, label: "Đã kết thúc" },
 ];
 
 export default function StatusTabs({
@@ -33,12 +33,12 @@ export default function StatusTabs({
             key={tab.key}
             onPress={() => onChangeStatus(tab.key)}
             className={`flex-1 py-2.5 px-2 rounded-full ${
-              isActive ? 'bg-[#244B35]' : 'bg-gray-100'
+              isActive ? "bg-[#244B35]" : "bg-gray-100"
             }`}
           >
             <Text
               className={`text-center text-sm font-medium ${
-                isActive ? 'text-white' : 'text-gray-600'
+                isActive ? "text-white" : "text-gray-600"
               }`}
             >
               {tab.label} ({count})
