@@ -15,7 +15,6 @@ import {
   Download,
   Info,
   Share2,
-  Trash2,
   User,
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
@@ -97,23 +96,23 @@ export default function BookingDetailScreen() {
     }
   };
 
-  const handleCancel = () => {
-    Alert.alert(
-      'Hủy booking',
-      'Bạn có chắc muốn hủy booking này? Hành động này không thể hoàn tác.',
-      [
-        { text: 'Không', style: 'cancel' },
-        {
-          text: 'Hủy booking',
-          style: 'destructive',
-          onPress: () => {
-            Alert.alert('Thành công', 'Đã hủy booking');
-            router.back();
-          },
-        },
-      ]
-    );
-  };
+  // const handleCancel = () => {
+  //   Alert.alert(
+  //     'Hủy booking',
+  //     'Bạn có chắc muốn hủy booking này? Hành động này không thể hoàn tác.',
+  //     [
+  //       { text: 'Không', style: 'cancel' },
+  //       {
+  //         text: 'Hủy booking',
+  //         style: 'destructive',
+  //         onPress: () => {
+  //           Alert.alert('Thành công', 'Đã hủy booking');
+  //           router.back();
+  //         },
+  //       },
+  //     ]
+  //   );
+  // };
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
@@ -315,7 +314,7 @@ export default function BookingDetailScreen() {
                   </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   onPress={handleCancel}
                   className="bg-red-50 border border-red-100 py-4 rounded-xl flex-row items-center justify-center"
                 >
@@ -323,7 +322,7 @@ export default function BookingDetailScreen() {
                   <Text className="text-red-600 font-bold ml-2">
                     Hủy booking này
                   </Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
             )}
           </View>
