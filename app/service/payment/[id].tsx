@@ -1,73 +1,82 @@
-import MomoIcon from '@/assets/images/momo-icon';
-import VNPayIcon from '@/assets/images/vnpay-icon';
-import MyButton from '@/components/ui/Button';
-import { CustomHeader } from '@/components/ui/CustomHeader';
-import { ServiceService } from '@/services/service.service';
-import { PaymentMethod } from '@/types/service';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { differenceInSeconds, format, parseISO } from 'date-fns';
-import { vi } from 'date-fns/locale';
-import { router, useLocalSearchParams } from 'expo-router';
-import { Clock, CreditCard, Info, User } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import MomoIcon from "@/assets/images/momo-icon";
+import VNPayIcon from "@/assets/images/vnpay-icon";
+import MyButton from "@/components/ui/Button";
+import { CustomHeader } from "@/components/ui/CustomHeader";
+import { ServiceService } from "@/services/service.service";
+import { PaymentMethod } from "@/types/service";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { differenceInSeconds, format, parseISO } from "date-fns";
+import { vi } from "date-fns/locale";
+import { router, useLocalSearchParams } from "expo-router";
+import { Clock, CreditCard, Info, User } from "lucide-react-native";
+import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function PaymentScreen() {
   const queryClient = useQueryClient();
   const { id, bookingData } = useLocalSearchParams();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(
-    null
+    null,
   );
 
   const { data: fetchedBooking, isLoading: isFetchingBooking } = useQuery({
-    queryKey: ['booking', id],
+    queryKey: ["booking", id],
     queryFn: () => ServiceService.getBookingById(Number(id)),
     enabled: !!id && !bookingData,
     select: (res) => res.data,
   });
 
   const paymentMutation = useMutation({
-    mutationFn: (body: { method: string; note: string }) =>
-      ServiceService.confirmPayment(Number(id), body),
+    mutationFn: async () => {
+      if (!selectedMethod) throw new Error("Payment method not selected");
+      const result = await ServiceService.createPaymentForBooking(
+        Number(id),
+        selectedMethod,
+      );
+      return result;
+    },
     onSuccess: (response) => {
-      const result = response.data;
+      const { paymentUrl, txnRef, amount } = response;
+      if (!paymentUrl) {
+        throw new Error("Payment URL not received from server");
+      }
+
+      // Navigate to processing screen with payment details
       router.replace({
-        pathname: '/service/payment/success',
+        pathname: "/payment/processing",
         params: {
-          bookingCode: result.code,
-          serviceName: result.service.name,
-          customerName: result.resident.fullName,
-          date: result.bookingDate,
-          slots: JSON.stringify(result.timestamps),
-          total: result.totalPrice,
-          method: selectedMethod,
+          txnRef,
+          paymentUrl,
+          amount: String(data.totalPrice),
+          paymentMethod: selectedMethod?.toLowerCase() || "vnpay",
+          targetType: "BOOKING",
+          targetId: String(id),
+          bookingCode: data.code,
+          serviceName: data.service.name,
+          customerName: data.resident.fullName,
         },
       } as any);
-      queryClient.invalidateQueries({ queryKey: ['bookings', 'mine'] });
-      queryClient.invalidateQueries({ queryKey: ['booking', id] });
-      const dateString = result.bookingDate;
-      queryClient.invalidateQueries({
-        queryKey: ['slots', id, dateString],
-      });
     },
     onError: (error: any) => {
       Alert.alert(
-        'Lỗi thanh toán',
-        error?.response?.data?.message || 'Không thể xác nhận thanh toán'
+        "Lỗi thanh toán",
+        error?.response?.data?.message ||
+          error?.message ||
+          "Không thể tạo link thanh toán",
       );
     },
   });
 
   const data = bookingData ? JSON.parse(bookingData as string) : fetchedBooking;
-  const [timeLeft, setTimeLeft] = useState('');
+  const [timeLeft, setTimeLeft] = useState("");
 
   useEffect(() => {
     if (!data?.expiresAt) return;
@@ -79,13 +88,13 @@ export default function PaymentScreen() {
 
       if (diff <= 0) {
         clearInterval(interval);
-        Alert.alert('Hết hạn', 'Phiên giữ chỗ đã kết thúc.', [
-          { text: 'Quay lại', onPress: () => router.back() },
+        Alert.alert("Hết hạn", "Phiên giữ chỗ đã kết thúc.", [
+          { text: "Quay lại", onPress: () => router.back() },
         ]);
       } else {
         const mins = Math.floor(diff / 60);
         const secs = diff % 60;
-        setTimeLeft(`${mins}:${secs.toString().padStart(2, '0')}`);
+        setTimeLeft(`${mins}:${secs.toString().padStart(2, "0")}`);
       }
     }, 1000);
 
@@ -94,14 +103,11 @@ export default function PaymentScreen() {
 
   const handlePayment = () => {
     if (!selectedMethod) {
-      Alert.alert('Thông báo', 'Vui lòng chọn phương thức thanh toán');
+      Alert.alert("Thông báo", "Vui lòng chọn phương thức thanh toán");
       return;
     }
 
-    paymentMutation.mutate({
-      method: selectedMethod,
-      note: `Thanh toán qua ${selectedMethod} cho đơn hàng ${data.code}`,
-    });
+    paymentMutation.mutate();
   };
 
   if (isFetchingBooking) return <ActivityIndicator className="flex-1" />;
@@ -114,8 +120,8 @@ export default function PaymentScreen() {
       <View className="bg-orange-50 px-6 py-3 flex-row items-center border-b border-orange-100">
         <Clock size={16} color="#c2410c" />
         <Text className="text-orange-700 text-sm font-medium ml-2">
-          Slot được giữ trong{' '}
-          <Text className="font-bold">{timeLeft || '--:--'}</Text> phút
+          Slot được giữ trong{" "}
+          <Text className="font-bold">{timeLeft || "--:--"}</Text> phút
         </Text>
       </View>
 
@@ -170,7 +176,7 @@ export default function PaymentScreen() {
               <View className="flex-row justify-between">
                 <Text className="text-sm text-gray-500">Ngày sử dụng</Text>
                 <Text className="text-sm font-bold text-gray-800">
-                  {format(parseISO(data.bookingDate), 'dd/MM/yyyy', {
+                  {format(parseISO(data.bookingDate), "dd/MM/yyyy", {
                     locale: vi,
                   })}
                 </Text>
@@ -210,8 +216,8 @@ export default function PaymentScreen() {
               style={{
                 borderColor:
                   selectedMethod === PaymentMethod.VNPAY
-                    ? '#E09B6B'
-                    : '#F3F4F6',
+                    ? "#E09B6B"
+                    : "#F3F4F6",
               }}
             >
               <View className="w-10 h-10 mr-3 items-center justify-center">
@@ -229,7 +235,7 @@ export default function PaymentScreen() {
               className="bg-white p-4 rounded-xl mb-6 flex-row items-center border shadow-sm"
               style={{
                 borderColor:
-                  selectedMethod === PaymentMethod.MOMO ? '#E09B6B' : '#F3F4F6',
+                  selectedMethod === PaymentMethod.MOMO ? "#E09B6B" : "#F3F4F6",
               }}
             >
               <View className="w-10 h-10 mr-3 items-center justify-center">
@@ -249,7 +255,7 @@ export default function PaymentScreen() {
                 Tổng thanh toán
               </Text>
               <Text className="text-white text-2xl font-black mt-1">
-                {data.totalPrice.toLocaleString('vi-VN')} đ
+                {data.totalPrice.toLocaleString("vi-VN")} đ
               </Text>
             </View>
             <View className="bg-white/20 p-2 rounded-full">
@@ -262,7 +268,7 @@ export default function PaymentScreen() {
       <View className="bg-white px-5 py-4 border-t border-gray-100 shadow-lg">
         <MyButton
           variant="secondary"
-          className={`w-full py-4 rounded-xl ${selectedMethod ? 'bg-[#E09B6B]' : 'bg-gray-300'}`}
+          className={`w-full py-4 rounded-xl ${selectedMethod ? "bg-[#E09B6B]" : "bg-gray-300"}`}
           textClassName="font-black text-base"
           onPress={handlePayment}
           disabled={!selectedMethod}
