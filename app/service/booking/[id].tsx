@@ -7,7 +7,9 @@ import {
 } from '@/types/service';
 import { useQuery } from '@tanstack/react-query';
 import { differenceInSeconds, format, parseISO } from 'date-fns';
+import * as Print from 'expo-print';
 import { router, useLocalSearchParams } from 'expo-router';
+import * as Sharing from 'expo-sharing';
 import {
   Calendar,
   Clock,
@@ -76,8 +78,118 @@ export default function BookingDetailScreen() {
     'HH:mm, dd/MM/yyyy'
   );
 
-  const handleDownloadPDF = () => {
-    Alert.alert('Thông báo', 'Tính năng tải PDF đang được phát triển');
+  const handleDownloadPDF = async () => {
+    const timeSlotsHtml = booking.timestamps
+      .map(
+        (slot: { startTime: string; endTime: string }) => `
+      <div class="time-chip">
+        <span class="clock-icon">🕒</span>
+        ${slot.startTime} - ${slot.endTime}
+      </div>
+    `
+      )
+      .join('');
+
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <style>
+          body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; line-height: 1.6; }
+          .container { border: 1px solid #eee; padding: 30px; border-radius: 20px; max-width: 600px; margin: auto; }
+          
+          .header { text-align: center; margin-bottom: 30px; }
+          .brand-name { color: #244B35; font-size: 28px; font-weight: bold; margin-bottom: 5px; }
+          .title { font-size: 18px; color: #E09B6B; text-transform: uppercase; letter-spacing: 1px; }
+          
+          hr { border: 0; border-top: 1px dashed #ccc; margin: 20px 0; }
+
+          .row { display: flex; justify-content: space-between; margin-bottom: 15px; align-items: flex-start; }
+          .label { color: #666; font-size: 14px; }
+          .value { font-weight: 600; color: #1a1a1a; text-align: right; flex: 1; margin-left: 20px; }
+          
+          .status-paid { color: #244B35; font-weight: bold; }
+
+          .time-container { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; max-width: 70%; }
+          .time-chip { 
+            background-color: #244B35; 
+            color: white; 
+            padding: 6px 12px; 
+            border-radius: 8px; 
+            font-size: 12px; 
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+          }
+          .clock-icon { margin-right: 5px; font-size: 10px; }
+
+          .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #999; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <div class="brand-name">EMERALD TOWER</div>
+            <div class="title">Thông Tin Đặt Chỗ</div>
+          </div>
+
+          <div class="row">
+            <span class="label">Mã đơn hàng</span>
+            <span class="value">#${booking.code}</span>
+          </div>
+
+          <div class="row">
+            <span class="label">Trạng thái</span>
+            <span class="value status-paid">Đã thanh toán</span>
+          </div>
+
+          <div class="row">
+            <span class="label">Dịch vụ</span>
+            <span class="value">#${booking.service.name}</span>
+          </div>
+
+          <div class="row">
+            <span class="label">Ngày</span>
+            <span class="value">#${formattedDate}</span>
+          </div>
+
+          <hr />
+
+          <div class="row">
+            <span class="label">Thời gian</span>
+            <div class="time-container">
+              ${timeSlotsHtml}
+            </div>
+          </div>
+
+          <div class="footer">
+            <p>Vui lòng xuất trình phiếu này khi sử dụng dịch vụ.</p>
+            <p>Cảm ơn bạn đã tin tưởng chúng tôi!</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+    try {
+      const { uri } = await Print.printToFileAsync({ html: htmlContent });
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, {
+          UTI: '.pdf',
+          mimeType: 'application/pdf',
+        });
+      } else {
+        Alert.alert(
+          'Thông báo',
+          'Tính năng chia sẻ không khả dụng trên thiết bị này'
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Lỗi', 'Không thể tạo file PDF');
+    }
   };
 
   const handleShare = async () => {
