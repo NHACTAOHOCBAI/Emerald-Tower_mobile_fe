@@ -94,6 +94,11 @@ export default function ServiceDetailScreen() {
       return;
     }
 
+    if (!isToday && selectedDate.getTime() < Date.now()) {
+      Alert.alert('Thông báo', 'Không thể đặt cho thời điểm trong quá khứ');
+      return;
+    }
+
     const formattedSlots = selectedSlots.map((slot) => {
       const [start, end] = slot.split('-');
       return { startTime: start, endTime: end };
@@ -107,6 +112,10 @@ export default function ServiceDetailScreen() {
 
   const total = service.unit_price * selectedSlots.length;
   const isFree = service.unit_price === 0;
+  const isToday =
+    selectedDate.getDate() === new Date().getDate() &&
+    selectedDate.getMonth() === new Date().getMonth() &&
+    selectedDate.getFullYear() === new Date().getFullYear();
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <CustomHeader title={service.name} />
@@ -183,10 +192,25 @@ export default function ServiceDetailScreen() {
               const isSelected = selectedSlots.includes(slotKey);
               const isFull = slot.remaining_slot === 0;
 
+              const now = new Date();
+
+              const [endHour, endMinute] = slot.end_time.split(':').map(Number);
+
+              const slotEndTime = new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                now.getDate(),
+                endHour,
+                endMinute,
+                0
+              ).getTime();
+
+              const notValid = isToday && slotEndTime < Date.now();
+
               let containerStyle = '';
               let textStyle = '';
 
-              if (isFull) {
+              if (isFull || notValid) {
                 containerStyle = 'bg-white border border-gray-400';
                 textStyle = 'text-gray-500';
               } else if (isSelected) {
