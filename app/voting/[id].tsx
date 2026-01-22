@@ -52,8 +52,10 @@ export default function VotingDetailScreen() {
     },
     onError: (error: any) => {
       const errorMsg =
-        error?.response?.data?.message ||
-        'Có lỗi xảy ra khi biểu quyết, thử lại sau';
+        error?.data?.data?.message ||
+        error?.data?.message ||
+        error?.message ||
+        'Có lỗi xảy ra khi biểu quyết, vui lòng thử lại sau ít phút';
       Alert.alert('Lỗi', errorMsg);
     },
   });
