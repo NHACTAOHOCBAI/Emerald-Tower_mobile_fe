@@ -9,7 +9,6 @@ import {
 } from '@/types/feedback';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   CheckCircle,
@@ -67,6 +66,13 @@ export default function FeedbackDetailScreen() {
     ]);
   };
 
+  const formatWithUTC7 = (dateString: string) => {
+    const date = new Date(dateString);
+    date.setHours(date.getHours() + 7);
+
+    return format(date, 'HH:mm, dd/MM/yyyy');
+  };
+
   if (isLoading) return <ActivityIndicator />;
 
   if (!feedback) {
@@ -80,12 +86,6 @@ export default function FeedbackDetailScreen() {
   const statusLabel = getFeedbackStatusLabel(feedback.status);
   const statusColor = getFeedbackStatusColor(feedback.status);
   const typeLabel = getIssueTypeLabel(feedback.type);
-
-  const formattedDate = format(
-    new Date(feedback.createdAt),
-    "HH:mm, 'ngày' dd/MM/yyyy",
-    { locale: vi }
-  );
 
   const handleRate = () => {
     if (feedback.status === FeedbackStatus.RESOLVED && !feedback.rating) {
@@ -120,7 +120,9 @@ export default function FeedbackDetailScreen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="p-5">
           <View className="bg-white rounded-lg p-4 mb-4">
-            <Text className="text-xs text-gray-500 mb-2">{formattedDate}</Text>
+            <Text className="text-xs text-gray-500 mb-2">
+              {formatWithUTC7(feedback.createdAt)}
+            </Text>
             <Text className="text-lg font-bold text-gray-900 mb-2">
               {feedback.title}
             </Text>
@@ -206,7 +208,7 @@ export default function FeedbackDetailScreen() {
                   Tạo phản ánh
                 </Text>
                 <Text className="text-xs text-gray-500">
-                  {format(new Date(feedback.createdAt), 'HH:mm, dd/MM/yyyy')}
+                  {formatWithUTC7(feedback.createdAt)}
                 </Text>
               </View>
             </View>
@@ -221,7 +223,7 @@ export default function FeedbackDetailScreen() {
                     Đang xử lý
                   </Text>
                   <Text className="text-xs text-gray-500">
-                    {format(new Date(feedback.updatedAt), 'HH:mm, dd/MM/yyyy')}
+                    {formatWithUTC7(feedback.updatedAt)}
                   </Text>
                 </View>
               </View>
@@ -237,7 +239,7 @@ export default function FeedbackDetailScreen() {
                     Đã hoàn tất
                   </Text>
                   <Text className="text-xs text-gray-500">
-                    {format(new Date(feedback.updatedAt), 'HH:mm, dd/MM/yyyy')}
+                    {formatWithUTC7(feedback.updatedAt)}
                   </Text>
                 </View>
               </View>
@@ -258,7 +260,7 @@ export default function FeedbackDetailScreen() {
                     </Text>
                   </View>
                   <Text className="text-xs text-gray-500">
-                    {format(new Date(feedback.updatedAt), 'HH:mm, dd/MM/yyyy')}
+                    {formatWithUTC7(feedback.updatedAt)}
                   </Text>
                 </View>
               </View>
