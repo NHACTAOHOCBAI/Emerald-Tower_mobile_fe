@@ -5,7 +5,6 @@ import {
   getFeedbackStatusLabel,
 } from '@/types/feedback';
 import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
 import { router } from 'expo-router';
 import {
   Building,
@@ -36,11 +35,14 @@ export default function FeedbackCard({ feedback, onPress }: FeedbackCardProps) {
   const statusLabel = getFeedbackStatusLabel(feedback.status);
   const statusColor = getFeedbackStatusColor(feedback.status);
 
-  const formattedDate = format(
-    new Date(feedback.createdAt),
-    'HH:mm, dd/MM/yyyy',
-    { locale: vi }
-  );
+  const formatWithUTC7 = (dateString: string) => {
+    const date = new Date(dateString);
+    date.setHours(date.getHours() + 7);
+
+    return format(date, 'HH:mm, dd/MM/yyyy');
+  };
+
+  const formattedDate = formatWithUTC7(feedback.createdAt);
 
   const category = FEEDBACK_CATEGORIES.find((c) => c.type === feedback.type);
   const IconComponent = category
